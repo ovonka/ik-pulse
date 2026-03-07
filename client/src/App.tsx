@@ -2,7 +2,7 @@ import AppRouter from "./app/router";
 
 function App() {
   return (
-    <div className="App">
+    <div className="bg-gray-100">
       <AppRouter />
     </div>
   );

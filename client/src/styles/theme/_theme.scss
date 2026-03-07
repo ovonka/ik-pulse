@@ -1,0 +1,187 @@
+:root {
+  /* -----------------------------
+     BRAND
+  ----------------------------- */
+  --color-brand-primary: #1fb981;
+  --color-brand-primary-hover: #18a874;
+  --color-brand-primary-soft: #dff7ee;
+
+  --color-brand-sidebar: #141b2d;
+  --color-brand-sidebar-hover: #1b2438;
+  --color-brand-sidebar-active: #1fb981;
+  --color-brand-sidebar-text: #f8fafc;
+  --color-brand-sidebar-muted: #cbd5e1;
+
+  /* -----------------------------
+     NEUTRALS / SURFACES
+  ----------------------------- */
+  --color-bg-app: #f5f7fb;
+  --color-bg-surface: #ffffff;
+  --color-bg-surface-muted: #f8fafc;
+  --color-bg-soft: #eef2f7;
+
+  --color-border-default: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  /* -----------------------------
+     TEXT
+  ----------------------------- */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-text-inverse: #f8fafc;
+
+  /* -----------------------------
+     STATUS
+  ----------------------------- */
+  --color-success: #16a34a;
+  --color-success-soft: #dcfce7;
+
+  --color-danger: #ef4444;
+  --color-danger-soft: #fee2e2;
+
+  --color-warning: #f59e0b;
+  --color-warning-soft: #fef3c7;
+
+  --color-info: #3b82f6;
+  --color-info-soft: #dbeafe;
+
+  /* -----------------------------
+     CHARTS
+  ----------------------------- */
+  --color-chart-primary: #1fb981;
+  --color-chart-success: #16a34a;
+  --color-chart-danger: #ef4444;
+  --color-chart-warning: #f59e0b;
+  --color-chart-info: #3b82f6;
+  --color-chart-grid: #e5e7eb;
+
+  /* -----------------------------
+     SHADOWS
+  ----------------------------- */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 8px 20px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+
+  /* -----------------------------
+     RADIUS
+  ----------------------------- */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+
+  /* -----------------------------
+     SEMANTIC TOKENS
+  ----------------------------- */
+  --bg: var(--color-bg-app);
+  --surface: var(--color-bg-surface);
+  --surface-muted: var(--color-bg-surface-muted);
+  --surface-soft: var(--color-bg-soft);
+
+  --text: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
+  --text-inverse: var(--color-text-inverse);
+
+  --border: var(--color-border-default);
+  --border-strong: var(--color-border-strong);
+
+  --primary: var(--color-brand-primary);
+  --primary-hover: var(--color-brand-primary-hover);
+  --primary-soft: var(--color-brand-primary-soft);
+
+  --sidebar-bg: var(--color-brand-sidebar);
+  --sidebar-hover: var(--color-brand-sidebar-hover);
+  --sidebar-active: var(--color-brand-sidebar-active);
+  --sidebar-text: var(--color-brand-sidebar-text);
+  --sidebar-text-muted: var(--color-brand-sidebar-muted);
+
+  --success: var(--color-success);
+  --success-soft: var(--color-success-soft);
+
+  --danger: var(--color-danger);
+  --danger-soft: var(--color-danger-soft);
+
+  --warning: var(--color-warning);
+  --warning-soft: var(--color-warning-soft);
+
+  --info: var(--color-info);
+  --info-soft: var(--color-info-soft);
+
+  --chart-primary: var(--color-chart-primary);
+  --chart-success: var(--color-chart-success);
+  --chart-danger: var(--color-chart-danger);
+  --chart-warning: var(--color-chart-warning);
+  --chart-info: var(--color-chart-info);
+  --chart-grid: var(--color-chart-grid);
+}
+
+/* =========================================================
+   DARK THEME
+   ========================================================= */
+[data-theme='dark'] {
+  /* -----------------------------
+     BRAND
+  ----------------------------- */
+  --color-brand-primary: #22c58b;
+  --color-brand-primary-hover: #1fb981;
+  --color-brand-primary-soft: rgba(34, 197, 139, 0.12);
+
+  --color-brand-sidebar: #0b1220;
+  --color-brand-sidebar-hover: #131b2b;
+  --color-brand-sidebar-active: #22c58b;
+  --color-brand-sidebar-text: #f8fafc;
+  --color-brand-sidebar-muted: #94a3b8;
+
+  /* -----------------------------
+     NEUTRALS / SURFACES
+  ----------------------------- */
+  --color-bg-app: #0f172a;
+  --color-bg-surface: #111827;
+  --color-bg-surface-muted: #1f2937;
+  --color-bg-soft: #162032;
+
+  --color-border-default: #263244;
+  --color-border-strong: #334155;
+
+  /* -----------------------------
+     TEXT
+  ----------------------------- */
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #0f172a;
+
+  /* -----------------------------
+     STATUS
+  ----------------------------- */
+  --color-success: #4ade80;
+  --color-success-soft: rgba(74, 222, 128, 0.12);
+
+  --color-danger: #f87171;
+  --color-danger-soft: rgba(248, 113, 113, 0.12);
+
+  --color-warning: #fbbf24;
+  --color-warning-soft: rgba(251, 191, 36, 0.12);
+
+  --color-info: #60a5fa;
+  --color-info-soft: rgba(96, 165, 250, 0.12);
+
+  /* -----------------------------
+     CHARTS
+  ----------------------------- */
+  --color-chart-primary: #22c58b;
+  --color-chart-success: #4ade80;
+  --color-chart-danger: #f87171;
+  --color-chart-warning: #fbbf24;
+  --color-chart-info: #60a5fa;
+  --color-chart-grid: #334155;
+
+  /* -----------------------------
+     SHADOWS
+  ----------------------------- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+}

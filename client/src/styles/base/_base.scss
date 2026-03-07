@@ -2,15 +2,22 @@
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #111827;
-  background-color: #f8fafc;
+}
+
+html {
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 body {
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: #f8fafc;
-  color: #111827;
+  background-color: var(--bg);
+  color: var(--text);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 a {
@@ -25,8 +32,15 @@ select {
   font: inherit;
 }
 
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
 .page {
-  padding: 2rem;
+  min-height: 100vh;
+  padding: 1.5rem;
 }
 
 .page--centered {
@@ -34,5 +48,15 @@ select {
   display: grid;
   place-items: center;
   text-align: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+}
+
+.surface {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.text-muted {
+  color: var(--text-muted);
 }
