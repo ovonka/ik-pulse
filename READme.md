@@ -40,6 +40,10 @@ iK Pulse is a full-stack project designed to demonstrate:
 - [x] Context-aware transaction actions
 - [x] Transactions pagination controls
 - [x] Transactions empty state
+- [x] Settlements page KPI cards
+- [x] Next settlement summary card
+- [x] Settlement history table
+- [x] Global toast feedback for transaction actions
 
 ### Backend
 - [ ] Pending
