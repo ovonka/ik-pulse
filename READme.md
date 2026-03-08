@@ -24,6 +24,16 @@ iK Pulse is a full-stack project designed to demonstrate:
 - [x] App shell with sidebar and topbar
 - [x] Theme state management with Zustand
 - [x] Unit and integration testing setup
+- [x] Dashboard alert banner
+- [x] Dashboard KPI cards
+- [x] Dashboard chart section
+- [x] Contextual recent transactions table
+- [x] Chart range filtering
+- [x] Dismissible alert state
+- [x] Reusable dashboard loading skeleton
+- [x] 24H / 3D / 7D / 14D / 30D chart range support
+- [x] time-aware status breakdown chart
+- [x] contextual transaction actions by status
 
 ### Backend
 - [ ] Pending
