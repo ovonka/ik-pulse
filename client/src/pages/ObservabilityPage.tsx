@@ -1,9 +1,14 @@
 function ObservabilityPage() {
   return (
-    <div className="page">
-      <h1>Observability</h1>
-      <p>Logs, metrics and monitoring page</p>
-    </div>
+    <section
+      className="rounded-2xl border p-6"
+      style={{
+        backgroundColor: 'var(--surface)',
+        borderColor: 'var(--border)',
+      }}
+    >
+      <h2 className="text-lg font-semibold">Observability page</h2>
+    </section>
   );
 }
 

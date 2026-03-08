@@ -1,9 +1,14 @@
 function TransactionsPage() {
   return (
-    <div className="page">
-      <h1>Transactions</h1>
-      <p>Transactions page</p>
-    </div>
+    <section
+      className="rounded-2xl border p-6"
+      style={{
+        backgroundColor: 'var(--surface)',
+        borderColor: 'var(--border)',
+      }}
+    >
+      <h2 className="text-lg font-semibold">Transactions page</h2>
+    </section>
   );
 }
 
