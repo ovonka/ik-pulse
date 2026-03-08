@@ -44,6 +44,10 @@ iK Pulse is a full-stack project designed to demonstrate:
 - [x] Next settlement summary card
 - [x] Settlement history table
 - [x] Global toast feedback for transaction actions
+- [x] Simulator starts with empty log stream
+- [x] Simulator logs capped to recent events
+- [x] Simulator generates realistic reference and idempotency identifiers
+- [x] Internal tooling model aligned to admin / QA use cases
 
 ### Backend
 - [ ] Pending
