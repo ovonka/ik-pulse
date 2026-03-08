@@ -34,6 +34,12 @@ iK Pulse is a full-stack project designed to demonstrate:
 - [x] 24H / 3D / 7D / 14D / 30D chart range support
 - [x] time-aware status breakdown chart
 - [x] contextual transaction actions by status
+- [x] Transactions page search
+- [x] Transactions status filters
+- [x] Transactions table
+- [x] Context-aware transaction actions
+- [x] Transactions pagination controls
+- [x] Transactions empty state
 
 ### Backend
 - [ ] Pending
