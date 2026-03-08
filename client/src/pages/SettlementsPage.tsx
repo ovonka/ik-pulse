@@ -1,9 +1,14 @@
 function SettlementsPage() {
   return (
-    <div className="page">
-      <h1>Settlements</h1>
-      <p>Settlements page</p>
-    </div>
+    <section
+      className="rounded-2xl border p-6"
+      style={{
+        backgroundColor: 'var(--surface)',
+        borderColor: 'var(--border)',
+      }}
+    >
+      <h2 className="text-lg font-semibold">Settlements page</h2>
+    </section>
   );
 }
 
