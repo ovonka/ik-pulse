@@ -1,10 +1,13 @@
-import AppRouter from "./app/router";
+import AppRouter from './app/router';
+import ToastContainer from './components/ui/ToastContainer';
 
 function App() {
   return (
-    <div className="bg-gray-100">
+    <>
       <AppRouter />
-    </div>
+      <ToastContainer />
+    </>
   );
 }
+
 export default App;
