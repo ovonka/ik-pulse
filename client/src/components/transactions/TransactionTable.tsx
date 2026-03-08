@@ -1,6 +1,7 @@
 import { Eye, RotateCcw, Search } from 'lucide-react';
 import type { TransactionItem } from '../../features/transactions/types/transactions.types';
 import TransactionStatusBadge from './TransactionStatusBadge';
+import { useToastStore } from '../../app/store/toastStore';
 
 type TransactionTableProps = {
   items: TransactionItem[];
@@ -19,13 +20,39 @@ function getActionConfig(status: TransactionItem['status']) {
 }
 
 function TransactionTable({ items }: TransactionTableProps) {
+  const showToast = useToastStore((state) => state.showToast);
+
+  const handleActionClick = (item: TransactionItem) => {
+    if (item.status === 'failed') {
+      showToast({
+        type: 'info',
+        title: `Retrying transaction ${item.id}`,
+        message: 'Processing payment retry...',
+      });
+      return;
+    }
+
+    if (item.status === 'pending') {
+      showToast({
+        type: 'warning',
+        title: `Reviewing transaction ${item.id}`,
+        message: 'Pending transaction flagged for review.',
+      });
+      return;
+    }
+
+    showToast({
+      type: 'success',
+      title: `Viewing transaction ${item.id}`,
+      message: 'Opening transaction details...',
+    });
+  };
+
   return (
     <section
-      className="overflow-hidden border"
+      className="overflow-hidden"
       style={{
         backgroundColor: 'var(--surface)',
-        borderColor: 'var(--border)',
-        borderRadius: 'var(--radius-lg)',
       }}
     >
       <div className="overflow-x-auto">
@@ -72,13 +99,17 @@ function TransactionTable({ items }: TransactionTableProps) {
                   <td className="px-4 py-4" style={{ color: 'var(--text-muted)' }}>
                     {item.timestamp}
                   </td>
-                  <td className="px-4 py-4 font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <td
+                    className="px-4 py-4 font-mono text-xs"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
                     {item.idempotencyKey}
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex justify-end">
                       <button
                         type="button"
+                        onClick={() => handleActionClick(item)}
                         className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 font-medium transition hover:opacity-80"
                         style={{
                           color: 'var(--text)',
