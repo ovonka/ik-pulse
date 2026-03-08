@@ -31,7 +31,7 @@ function AlertBanner({ title, message, onDismiss }: AlertBannerProps) {
       <button
         type="button"
         aria-label="Dismiss alert"
-        className="rounded-lg p-1 transition hover:opacity-80"
+        className="rounded-lg p-1 transition hover:opacity-80 cursor-pointer"
         style={{ color: 'var(--text-muted)' }}
         onClick={onDismiss}
       >
