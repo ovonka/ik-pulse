@@ -11,6 +11,15 @@ const iconMap = {
 function ToastContainer() {
   const toasts = useToastStore((state) => state.toasts);
   const removeToast = useToastStore((state) => state.removeToast);
+  const startClosingToast = useToastStore((state) => state.startClosingToast);
+
+  function handleClose(id: string) {
+    startClosingToast(id);
+
+    setTimeout(() => {
+      removeToast(id);
+    }, 220);
+  }
 
   return (
     <div className="pointer-events-none fixed bottom-6 right-6 z-100 flex w-full max-w-sm flex-col gap-3">
@@ -20,7 +29,11 @@ function ToastContainer() {
         return (
           <div
             key={toast.id}
-            className="pointer-events-auto flex items-start gap-3 border px-4 py-4 shadow-lg"
+            className={`pointer-events-auto flex items-start gap-3 border px-4 py-4 shadow-lg ${
+              toast.isClosing
+                ? 'animate-[toast-out_220ms_ease-in_forwards]'
+                : 'animate-[toast-in_220ms_ease-out]'
+            }`}
             style={{
               backgroundColor: 'var(--surface)',
               borderColor: 'var(--border)',
@@ -55,7 +68,7 @@ function ToastContainer() {
 
             <button
               type="button"
-              onClick={() => removeToast(toast.id)}
+              onClick={() => handleClose(toast.id)}
               className="cursor-pointer rounded-lg p-1 transition hover:opacity-80"
               style={{ color: 'var(--text-muted)' }}
               aria-label="Close toast"
