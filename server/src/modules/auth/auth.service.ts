@@ -1,19 +1,15 @@
 import { comparePassword } from '../../utils/passwords.js';
 import { signAccessToken } from '../../utils/jwt.js';
 import { findUserByEmail, findUserById } from '../users/users.service.js';
-import type { LoginResponse, SafeUser } from './auth.types.js';
+import type { LoginResponse, SafeUser, UserRecord } from './auth.types.js';
 
-function toSafeUser(user: {
-  id: string;
-  email: string;
-  role: 'merchant' | 'admin';
-  merchant_id: string | null;
-}): SafeUser {
+function toSafeUser(user: UserRecord): SafeUser {
   return {
     id: user.id,
     email: user.email,
     role: user.role,
     merchantId: user.merchant_id,
+    branchId: user.branch_id,
   };
 }
 
@@ -37,6 +33,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
     email: user.email,
     role: user.role,
     merchantId: user.merchant_id,
+    branchId: user.branch_id,
   });
 
   return {
