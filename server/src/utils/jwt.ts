@@ -1,11 +1,13 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
+import type { UserRole } from '../modules/auth/auth.types.js';
 
 export type AuthTokenPayload = {
   sub: string;
   email: string;
-  role: 'merchant' | 'admin';
+  role: UserRole;
   merchantId: string | null;
+  branchId: string | null;
 };
 
 export function signAccessToken(payload: AuthTokenPayload): string {
