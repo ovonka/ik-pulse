@@ -7,7 +7,7 @@ export async function loginController(req: Request, res: Response) {
 
   const result = await authService.login(parsed.email, parsed.password);
 
-  res.status(200).json(result);
+  return res.status(200).json(result);
 }
 
 export async function meController(req: Request, res: Response) {
