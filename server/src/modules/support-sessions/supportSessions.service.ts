@@ -40,7 +40,7 @@ export async function getActiveSupportSessionForMerchant(
     SELECT *
     FROM support_sessions
     WHERE merchant_id = $1
-      AND status = 'active'
+      AND status IN ('active', 'used')
       AND expires_at > NOW()
     ORDER BY created_at DESC
     LIMIT 1
@@ -230,11 +230,36 @@ export async function consumeSupportCode(params: {
     ]
   );
 
-  return {
+    const merchantContextResult = await pool.query<{
+    merchant_id: string;
+    merchant_name: string;
+    branch_id: string | null;
+    requested_by_email: string | null;
+  }>(
+    `
+    SELECT
+      s.merchant_id,
+      m.name AS merchant_name,
+      s.branch_id,
+      u.email AS requested_by_email
+    FROM support_sessions s
+    JOIN merchants m ON m.id = s.merchant_id
+    LEFT JOIN users u ON u.id = s.created_by_user_id
+    WHERE s.id = $1
+    LIMIT 1
+    `,
+    [consumedSession.id]
+  );
+
+  const merchantContext = merchantContextResult.rows[0];
+
+    return {
     session: toSupportSessionResponse(consumedSession),
     merchantContext: {
-      merchantId: consumedSession.merchant_id,
-      branchId: consumedSession.branch_id,
+      merchantId: merchantContext.merchant_id,
+      merchantName: merchantContext.merchant_name,
+      branchId: merchantContext.branch_id,
+      requestedByEmail: merchantContext.requested_by_email,
     },
   };
 }
