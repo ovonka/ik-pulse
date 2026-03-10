@@ -7,6 +7,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import supportSessionsRouter from './modules/support-sessions/supportSessions.routes.js';
 import transactionsRouter from './modules/transactions/transactions.routes.js';
 import settlementsRouter from './modules/settlements/settlements.routes.js';
+import dashboardRouter from './modules/dashboard/dashboard.routes.js';
 
 const app = express();
 
@@ -23,7 +24,7 @@ app.use('/auth', authRouter);
 app.use('/support-sessions', supportSessionsRouter);
 app.use('/transactions', transactionsRouter);
 app.use('/settlements', settlementsRouter);
-
+app.use('/dashboard', dashboardRouter);
 app.use(errorHandler);
 
 export default app;
