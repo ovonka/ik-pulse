@@ -1,4 +1,10 @@
-export type SupportAccessStatus = 'active' | 'revoked' | 'expired' | 'used';
+export type SupportAccessStatus =
+  | 'active'
+  | 'revoked'
+  | 'expired'
+  | 'used'
+  | 'resolved';
+
 export type SupportAccessScope = 'read_only' | 'elevated';
 
 export type SupportAccessSession = {
@@ -9,9 +15,11 @@ export type SupportAccessSession = {
   status: SupportAccessStatus;
   accessScope: SupportAccessScope;
   reason: string | null;
+  resolutionNote: string | null;
   expiresAt: string;
   consumedAt: string | null;
   revokedAt: string | null;
+  resolvedAt: string | null;
   createdAt: string;
 };
 
