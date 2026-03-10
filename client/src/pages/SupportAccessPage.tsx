@@ -58,6 +58,10 @@ function SupportAccessPage() {
       return 'Your support request has been attended to by the internal debug team.';
     }
 
+    if (activeSession.status === 'resolved') {
+      return 'Your support request has been resolved. You can generate a new support code if you still need help.';
+    }
+
     if (activeSession.status === 'expired') {
       return 'The previous support code expired. Generate a new one if support still needs access.';
     }
@@ -246,7 +250,7 @@ function SupportAccessPage() {
               </button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div>
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                   Status
@@ -273,6 +277,15 @@ function SupportAccessPage() {
                   {activeSession.reason}
                 </p>
               </div>
+
+              <div>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  Resolution Note
+                </p>
+                <p className="mt-1 font-semibold" style={{ color: 'var(--text)' }}>
+                  {activeSession.resolutionNote ?? '—'}
+                </p>
+              </div>
             </div>
 
             {activeSession.status === 'used' ? (
@@ -285,6 +298,19 @@ function SupportAccessPage() {
                 }}
               >
                 Your support request has been attended to by the internal debug team.
+              </div>
+            ) : null}
+
+            {activeSession.status === 'resolved' ? (
+              <div
+                className="rounded-xl border px-4 py-4 text-sm"
+                style={{
+                  backgroundColor: 'var(--info-soft)',
+                  borderColor: 'var(--info)',
+                  color: 'var(--info)',
+                }}
+              >
+                Your support request has been resolved. You can generate a new support code if you still need help.
               </div>
             ) : null}
           </div>

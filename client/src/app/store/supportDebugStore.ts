@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import type { SupportDebugContext } from '../../features/auth/types/supportDebug.types';
-import { consumeSupportCodeRequest } from '../../features/auth/api/supportDebugApi';
+import {
+  consumeSupportCodeRequest,
+  resolveSupportSessionRequest,
+} from '../../features/auth/api/supportDebugApi';
 import { useAuthStore } from './authStore';
 
 const STORAGE_KEY = 'ikpulse-support-debug-context';
@@ -33,6 +36,7 @@ type SupportDebugState = {
   error: string | null;
 
   consumeSupportCode: (supportCode: string) => Promise<SupportDebugContext>;
+  resolveSupportSession: (resolutionNote: string) => Promise<void>;
   clearDebugContext: () => void;
   clearError: () => void;
 };
@@ -66,6 +70,43 @@ export const useSupportDebugStore = create<SupportDebugState>((set) => ({
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to consume support code';
+
+      set({
+        status: 'error',
+        error: message,
+      });
+
+      throw error;
+    }
+  },
+
+  resolveSupportSession: async (resolutionNote: string) => {
+    const accessToken = useAuthStore.getState().accessToken;
+    const debugContext = useSupportDebugStore.getState().debugContext;
+
+    if (!accessToken || !debugContext) {
+      throw new Error('Missing debug context');
+    }
+
+    set({ status: 'loading', error: null });
+
+    try {
+      await resolveSupportSessionRequest(
+        accessToken,
+        debugContext.merchantContext.merchantId,
+        resolutionNote
+      );
+
+      setStoredDebugContext(null);
+
+      set({
+        debugContext: null,
+        status: 'success',
+        error: null,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to resolve support session';
 
       set({
         status: 'error',

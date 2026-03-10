@@ -16,6 +16,14 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
     title: 'Settlements',
     subtitle: 'Track upcoming and completed payouts',
   },
+  '/support-access': {
+    title: 'Support Access',
+    subtitle: 'Generate and manage temporary support sessions',
+  },
+  '/internal-support-session': {
+    title: 'Resolve Support Session',
+    subtitle: 'Close the active merchant support request with a resolution note',
+  },
   '/simulator': {
     title: 'Event Simulator',
     subtitle: 'Simulate payment events and webhook flows',
@@ -40,7 +48,6 @@ function AppLayout() {
 
       <div className="lg:pl-65">
         <Topbar title={meta.title} subtitle={meta.subtitle} />
-
         <SupportDebugBanner />
 
         <main className="p-4 md:p-6">

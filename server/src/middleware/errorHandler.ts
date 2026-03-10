@@ -32,6 +32,7 @@ export function errorHandler(
       'Support code has been revoked',
       'Support code has already been used',
       'Support code has expired',
+      'Support code has already been resolved',
     ];
 
     if (supportAccessErrors.includes(error.message)) {

@@ -10,5 +10,10 @@ export const consumeSupportCodeSchema = z.object({
   supportCode: z.string().trim().min(4).max(32),
 });
 
+export const resolveSupportSessionSchema = z.object({
+  resolutionNote: z.string().trim().min(5).max(1000),
+});
+
 export type CreateSupportSessionInput = z.infer<typeof createSupportSessionSchema>;
 export type ConsumeSupportCodeInput = z.infer<typeof consumeSupportCodeSchema>;
+export type ResolveSupportSessionInput = z.infer<typeof resolveSupportSessionSchema>;

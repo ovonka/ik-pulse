@@ -8,10 +8,11 @@ import {
   X,
   ActivityIcon,
   LogOut,
-  ShieldBanIcon,
+  ShieldCheck,
 } from 'lucide-react';
 import { useUIStore } from '../app/store/uiStore';
 import { useAuthStore } from '../app/store/authStore';
+import { useSupportDebugStore } from '../app/store/supportDebugStore';
 import type { UserRole } from '../features/auth/types/auth.types';
 
 type NavItem = {
@@ -41,6 +42,18 @@ const navItems: NavItem[] = [
     roles: ['merchant', 'admin', 'support', 'qa'],
   },
   {
+    label: 'Support Access',
+    to: '/support-access',
+    icon: ShieldCheck,
+    roles: ['merchant'],
+  },
+  {
+    label: 'Internal Support',
+    to: '/internal-support-session',
+    icon: ShieldCheck,
+    roles: ['admin', 'support', 'qa'],
+  },
+  {
     label: 'Simulator',
     to: '/simulator',
     icon: FlaskConical,
@@ -51,14 +64,7 @@ const navItems: NavItem[] = [
     to: '/observability',
     icon: Activity,
     roles: ['admin', 'support', 'qa'],
-    
   },
-  {
-  label: 'Support Access',
-  to: '/support-access',
-  icon: ShieldBanIcon,
-  roles: ['merchant'],
-},
 ];
 
 function formatRole(role: UserRole) {
@@ -76,6 +82,7 @@ function Sidebar() {
 
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const debugContext = useSupportDebugStore((state) => state.debugContext);
 
   const visibleNavItems = navItems.filter((item) =>
     user ? item.roles.includes(user.role) : false
@@ -85,6 +92,11 @@ function Sidebar() {
     logout();
     closeSidebar();
     navigate('/login', { replace: true });
+  }
+
+  function handleOpenResolvePage() {
+    closeSidebar();
+    navigate('/internal-support-session');
   }
 
   return (
@@ -178,7 +190,33 @@ function Sidebar() {
               {user?.email ?? 'No active session'}
             </p>
 
-            {user?.merchantId ? (
+            {debugContext ? (
+              <div className="mt-3 space-y-1">
+                <p className="text-[11px] font-medium" style={{ color: 'var(--sidebar-text)' }}>
+                  Helping: {debugContext.merchantContext.merchantName}
+                </p>
+
+                <p className="text-[11px]" style={{ color: 'var(--sidebar-text-muted)' }}>
+                  Requested by: {debugContext.merchantContext.requestedByEmail ?? 'Unknown requester'}
+                </p>
+
+                <p className="text-[11px]" style={{ color: 'var(--sidebar-text-muted)' }}>
+                  Code: {debugContext.session.supportCode}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleOpenResolvePage}
+                  className="mt-3 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition hover:opacity-85"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.06)',
+                    color: 'var(--sidebar-text)',
+                  }}
+                >
+                  Resolve Session
+                </button>
+              </div>
+            ) : user?.merchantId ? (
               <p className="mt-2 text-[11px]" style={{ color: 'var(--sidebar-text-muted)' }}>
                 Merchant scope active
               </p>

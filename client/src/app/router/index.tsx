@@ -9,6 +9,7 @@ import SettlementsPage from '../../pages/SettlementsPage';
 import SimulatorPage from '../../pages/SimulatorPage';
 import ObservabilityPage from '../../pages/ObservabilityPage';
 import NotFoundPage from '../../pages/NotFoundPage';
+import InternalSupportSessionPage from '../../pages/InternalSupportSessionPage';
 import SupportAccessPage from '../../pages/SupportAccessPage';
 
 function AppRouter() {
@@ -28,6 +29,7 @@ function AppRouter() {
     </Route>
 
     <Route element={<RoleRoute allowedRoles={['admin', 'support', 'qa']} />}>
+      <Route path="/internal-support-session" element={<InternalSupportSessionPage />} />
       <Route path="/simulator" element={<SimulatorPage />} />
       <Route path="/observability" element={<ObservabilityPage />} />
     </Route>
