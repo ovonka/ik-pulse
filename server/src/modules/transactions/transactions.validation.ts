@@ -7,4 +7,9 @@ export const getTransactionsQuerySchema = z.object({
   search: z.string().trim().optional(),
 });
 
+export const retryTransactionParamsSchema = z.object({
+  transactionId: z.string().uuid(),
+});
+
 export type GetTransactionsQuery = z.infer<typeof getTransactionsQuerySchema>;
+export type RetryTransactionParams = z.infer<typeof retryTransactionParamsSchema>;
