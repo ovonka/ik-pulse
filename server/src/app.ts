@@ -8,6 +8,7 @@ import supportSessionsRouter from './modules/support-sessions/supportSessions.ro
 import transactionsRouter from './modules/transactions/transactions.routes.js';
 import settlementsRouter from './modules/settlements/settlements.routes.js';
 import dashboardRouter from './modules/dashboard/dashboard.routes.js';
+import { startLiveTransactionSimulator } from './simulator/liveTransactionsSimulator.js';
 
 const app = express();
 
@@ -26,5 +27,7 @@ app.use('/transactions', transactionsRouter);
 app.use('/settlements', settlementsRouter);
 app.use('/dashboard', dashboardRouter);
 app.use(errorHandler);
+
+startLiveTransactionSimulator();
 
 export default app;
