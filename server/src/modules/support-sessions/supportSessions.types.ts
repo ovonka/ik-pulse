@@ -35,6 +35,8 @@ export type ConsumedSupportSessionResponse = {
   session: SupportSessionResponse;
   merchantContext: {
     merchantId: string;
+    merchantName: string;
     branchId: string | null;
+    requestedByEmail: string | null;
   };
 };
