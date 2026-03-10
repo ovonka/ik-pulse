@@ -10,12 +10,6 @@ function generateSupportCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
-function createExpiryDate(minutes: number) {
-  const date = new Date();
-  date.setMinutes(date.getMinutes() + minutes);
-  return date.toISOString();
-}
-
 function toSupportSessionResponse(record: SupportSessionRecord): SupportSessionResponse {
   return {
     id: record.id,
@@ -35,13 +29,23 @@ function toSupportSessionResponse(record: SupportSessionRecord): SupportSessionR
 export async function getActiveSupportSessionForMerchant(
   merchantId: string
 ): Promise<SupportSessionResponse | null> {
+  await pool.query(
+    `
+    UPDATE support_sessions
+    SET status = 'expired'
+    WHERE merchant_id = $1
+      AND status IN ('active', 'used')
+      AND expires_at <= NOW()
+    `,
+    [merchantId]
+  );
+
   const result = await pool.query<SupportSessionRecord>(
     `
     SELECT *
     FROM support_sessions
     WHERE merchant_id = $1
       AND status IN ('active', 'used')
-      AND expires_at > NOW()
     ORDER BY created_at DESC
     LIMIT 1
     `,
@@ -71,7 +75,6 @@ export async function createSupportSession(params: {
   }
 
   const supportCode = generateSupportCode();
-  const expiresAt = createExpiryDate(30);
 
   const result = await pool.query<SupportSessionRecord>(
     `
@@ -85,7 +88,7 @@ export async function createSupportSession(params: {
       reason,
       expires_at
     )
-    VALUES ($1, $2, $3, 'active', $4, $5, $6, $7)
+    VALUES ($1, $2, $3, 'active', $4, $5, $6, NOW() + INTERVAL '30 minutes')
     RETURNING *
     `,
     [
@@ -95,7 +98,6 @@ export async function createSupportSession(params: {
       accessScope,
       authUser.sub,
       reason,
-      expiresAt,
     ]
   );
 
@@ -128,7 +130,7 @@ export async function revokeSupportSession(params: {
     SET status = 'revoked',
         revoked_at = NOW()
     WHERE merchant_id = $1
-      AND status = 'active'
+      AND status IN ('active', 'used')
       AND expires_at > NOW()
     RETURNING *
     `,
@@ -183,11 +185,16 @@ export async function consumeSupportCode(params: {
     throw new Error('Support code has been revoked');
   }
 
-  if (session.status === 'used') {
-    throw new Error('Support code has already been used');
-  }
+  const expiryCheck = await pool.query<{ is_expired: boolean }>(
+    `
+    SELECT (expires_at <= NOW()) AS is_expired
+    FROM support_sessions
+    WHERE id = $1
+    `,
+    [session.id]
+  );
 
-  if (new Date(session.expires_at).getTime() <= Date.now()) {
+  if (expiryCheck.rows[0]?.is_expired) {
     await pool.query(
       `
       UPDATE support_sessions
@@ -200,37 +207,43 @@ export async function consumeSupportCode(params: {
     throw new Error('Support code has expired');
   }
 
-  const consumedResult = await pool.query<SupportSessionRecord>(
-    `
-    UPDATE support_sessions
-    SET status = 'used',
-        consumed_by_user_id = $1,
-        consumed_at = NOW()
-    WHERE id = $2
-    RETURNING *
-    `,
-    [authUser.sub, session.id]
-  );
+  let consumedSession: SupportSessionRecord;
 
-  const consumedSession = consumedResult.rows[0];
+  if (session.status === 'used') {
+    consumedSession = session;
+  } else {
+    const consumedResult = await pool.query<SupportSessionRecord>(
+      `
+      UPDATE support_sessions
+      SET status = 'used',
+          consumed_by_user_id = $1,
+          consumed_at = COALESCE(consumed_at, NOW())
+      WHERE id = $2
+      RETURNING *
+      `,
+      [authUser.sub, session.id]
+    );
 
-  await pool.query(
-    `
-    INSERT INTO support_audit_logs (support_session_id, actor_user_id, action, details)
-    VALUES ($1, $2, $3, $4::jsonb)
-    `,
-    [
-      consumedSession.id,
-      authUser.sub,
-      'support_session_consumed',
-      JSON.stringify({
-        supportCode,
-        internalRole: authUser.role,
-      }),
-    ]
-  );
+    consumedSession = consumedResult.rows[0];
 
-    const merchantContextResult = await pool.query<{
+    await pool.query(
+      `
+      INSERT INTO support_audit_logs (support_session_id, actor_user_id, action, details)
+      VALUES ($1, $2, $3, $4::jsonb)
+      `,
+      [
+        consumedSession.id,
+        authUser.sub,
+        'support_session_consumed',
+        JSON.stringify({
+          supportCode,
+          internalRole: authUser.role,
+        }),
+      ]
+    );
+  }
+
+  const merchantContextResult = await pool.query<{
     merchant_id: string;
     merchant_name: string;
     branch_id: string | null;
@@ -253,7 +266,7 @@ export async function consumeSupportCode(params: {
 
   const merchantContext = merchantContextResult.rows[0];
 
-    return {
+  return {
     session: toSupportSessionResponse(consumedSession),
     merchantContext: {
       merchantId: merchantContext.merchant_id,
