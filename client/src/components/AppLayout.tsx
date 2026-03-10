@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './TopBar';
+import SupportDebugBanner from './SupportDebugBanner';
 
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   '/dashboard': {
@@ -39,6 +40,8 @@ function AppLayout() {
 
       <div className="lg:pl-65">
         <Topbar title={meta.title} subtitle={meta.subtitle} />
+
+        <SupportDebugBanner />
 
         <main className="p-4 md:p-6">
           <Outlet />

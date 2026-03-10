@@ -1,44 +1,125 @@
 import { create } from 'zustand';
-import type { SupportAccessSession } from '../../features/auth/types/supportAccess.types';
+import type {
+  CreateSupportAccessPayload,
+  SupportAccessSession,
+} from '../../features/auth/types/supportAcces.types';
+import {
+  createSupportSessionRequest,
+  getCurrentSupportSessionRequest,
+  revokeSupportSessionRequest,
+} from '../../features/auth/api/supportAccessApi';
+import { useAuthStore } from './authStore';
+
+type SupportAccessStatus = 'idle' | 'loading' | 'success' | 'error';
 
 type SupportAccessState = {
   activeSession: SupportAccessSession | null;
-  generateCode: (reason: string) => SupportAccessSession;
-  revokeCode: () => void;
+  status: SupportAccessStatus;
+  error: string | null;
+
+  fetchCurrentSession: () => Promise<void>;
+  generateCode: (payload: CreateSupportAccessPayload) => Promise<SupportAccessSession>;
+  revokeCode: () => Promise<SupportAccessSession | null>;
+  clearError: () => void;
 };
-
-function createSupportCode() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
-}
-
-function createExpiryDate(minutes: number) {
-  const date = new Date();
-  date.setMinutes(date.getMinutes() + minutes);
-  return date.toISOString();
-}
 
 export const useSupportAccessStore = create<SupportAccessState>((set) => ({
   activeSession: null,
+  status: 'idle',
+  error: null,
 
-  generateCode: (reason: string) => {
-    const session: SupportAccessSession = {
-      code: createSupportCode(),
-      status: 'active',
-      expiresAt: createExpiryDate(30),
-      reason,
-    };
+  fetchCurrentSession: async () => {
+    const accessToken = useAuthStore.getState().accessToken;
 
-    set({ activeSession: session });
-    return session;
+    if (!accessToken) {
+      return;
+    }
+
+    set({ status: 'loading', error: null });
+
+    try {
+      const session = await getCurrentSupportSessionRequest(accessToken);
+
+      set({
+        activeSession: session,
+        status: 'success',
+        error: null,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to fetch support session';
+
+      set({
+        activeSession: null,
+        status: 'error',
+        error: message,
+      });
+    }
   },
 
-  revokeCode: () =>
-    set((state) => ({
-      activeSession: state.activeSession
-        ? {
-            ...state.activeSession,
-            status: 'revoked',
-          }
-        : null,
-    })),
+  generateCode: async (payload) => {
+    const accessToken = useAuthStore.getState().accessToken;
+
+    if (!accessToken) {
+      throw new Error('Missing access token');
+    }
+
+    set({ status: 'loading', error: null });
+
+    try {
+      const session = await createSupportSessionRequest(accessToken, payload);
+
+      set({
+        activeSession: session,
+        status: 'success',
+        error: null,
+      });
+
+      return session;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to create support session';
+
+      set({
+        status: 'error',
+        error: message,
+      });
+
+      throw error;
+    }
+  },
+
+  revokeCode: async () => {
+    const accessToken = useAuthStore.getState().accessToken;
+
+    if (!accessToken) {
+      throw new Error('Missing access token');
+    }
+
+    set({ status: 'loading', error: null });
+
+    try {
+      const session = await revokeSupportSessionRequest(accessToken);
+
+      set({
+        activeSession: session,
+        status: 'success',
+        error: null,
+      });
+
+      return session;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to revoke support session';
+
+      set({
+        status: 'error',
+        error: message,
+      });
+
+      throw error;
+    }
+  },
+
+  clearError: () => set({ error: null }),
 }));
