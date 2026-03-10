@@ -33,6 +33,8 @@ export function errorHandler(
       'Support code has already been used',
       'Support code has expired',
       'Support code has already been resolved',
+      'Transaction not found',
+      'Only failed transactions can be retried',
     ];
 
     if (supportAccessErrors.includes(error.message)) {
