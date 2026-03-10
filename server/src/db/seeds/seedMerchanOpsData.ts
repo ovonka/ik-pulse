@@ -85,7 +85,7 @@ async function seedMerchantOpsData() {
   for (let index = 0; index < 120; index += 1) {
     const status = randomTransactionStatus();
     const amount = faker.finance.amount({ min: 12, max: 3500, dec: 2 });
-    const initiatedAt = faker.date.recent({ days: 12 });
+    const initiatedAt = faker.date.recent({ days: 7 });
     const receivedAt = faker.date.soon({ days: 0, refDate: initiatedAt });
     const completedAt =
       status === 'pending' ? null : faker.date.soon({ days: 0, refDate: receivedAt });
