@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ActivityIcon, Lock, Mail, ShieldCheck } from 'lucide-react';
+import ThemeToggle from '../components/ui/ThemeToggle';
 import { useAuthStore } from '../app/store/authStore';
 import { useToastStore } from '../app/store/toastStore';
-import ThemeToggle from '../components/ui/ThemeToggle';
 import { useSupportDebugStore } from '../app/store/supportDebugStore';
 
 type RedirectState = {
@@ -17,38 +17,84 @@ function LoginPage() {
   const location = useLocation();
 
   const login = useAuthStore((state) => state.login);
+  const logout = useAuthStore((state) => state.logout);
   const status = useAuthStore((state) => state.status);
   const error = useAuthStore((state) => state.error);
   const clearError = useAuthStore((state) => state.clearError);
-  const showToast = useToastStore((state) => state.showToast);
+
   const consumeSupportCode = useSupportDebugStore((state) => state.consumeSupportCode);
+
+  const showToast = useToastStore((state) => state.showToast);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(true);
   const [supportCode, setSupportCode] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
 
   const state = location.state as RedirectState | null;
   const redirectPath = state?.from?.pathname ?? '/dashboard';
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const internalEmails = new Set([
+    'admin@ikpulse.co.za',
+    'support@ikpulse.co.za',
+    'qa@ikpulse.co.za',
+  ]);
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const requiresSupportCode = internalEmails.has(normalizedEmail);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     clearError();
+
+    if (requiresSupportCode && !supportCode.trim()) {
+      showToast({
+        type: 'error',
+        title: 'Support code required',
+        message: 'Internal users must enter a valid support access code before signing in.',
+      });
+      return;
+    }
 
     try {
       const user = await login({ email, password });
 
-      if (
-        supportCode.trim() &&
-        ['admin', 'support', 'qa'].includes(user.role)
-      ) {
-        await consumeSupportCode(supportCode.trim());
+      if (['admin', 'support', 'qa'].includes(user.role)) {
+        if (!supportCode.trim()) {
+          logout();
 
-        showToast({
-          type: 'success',
-          title: 'Support session started',
-          message: 'Merchant debug context loaded successfully.',
-        });
+          showToast({
+            type: 'error',
+            title: 'Support code required',
+            message: 'Internal users cannot access the application without a support code.',
+          });
+          return;
+        }
+
+        try {
+          await consumeSupportCode(supportCode.trim());
+
+          showToast({
+            type: 'success',
+            title: 'Support session started',
+            message: 'Merchant debug context loaded successfully.',
+          });
+        } catch (consumeError) {
+          logout();
+
+          const message =
+            consumeError instanceof Error
+              ? consumeError.message
+              : 'Failed to consume support code';
+
+          showToast({
+            type: 'error',
+            title: 'Support code invalid',
+            message,
+          });
+
+          return;
+        }
       } else {
         showToast({
           type: 'success',
@@ -74,10 +120,10 @@ function LoginPage() {
       className="relative flex min-h-screen items-center justify-center px-4 py-10"
       style={{
         background: `
-    radial-gradient(circle at bottom right, rgba(0, 0, 0, 0.59), transparent 52%),
-    radial-gradient(circle at bottom center, rgba(0, 0, 0, 0.18), transparent 45%),
-    var(--bg)
-  `,
+          radial-gradient(circle at 85% 100%, rgba(0, 0, 0, 0.42), transparent 28%),
+          radial-gradient(circle at 60% 100%, rgba(0, 0, 0, 0.12), transparent 40%),
+          var(--bg)
+        `,
       }}
     >
       <div className="absolute right-6 top-6">
@@ -173,35 +219,40 @@ function LoginPage() {
                   style={{ color: 'var(--text)' }}
                 />
               </div>
-              <div>
-  <label
-    htmlFor="support-code"
-    className="mb-2 block text-sm font-semibold"
-    style={{ color: 'var(--text)' }}
-  >
-    Support Access Code <span style={{ color: 'var(--text-muted)' }}>(optional)</span>
-  </label>
+            </div>
 
-  <div
-    className="flex items-center gap-3 border px-4 py-3"
-    style={{
-      backgroundColor: 'var(--surface-muted)',
-      borderColor: 'transparent',
-      borderRadius: 'var(--radius-md)',
-    }}
-  >
-    <ShieldCheck size={18} style={{ color: 'var(--text-muted)' }} />
-    <input
-      id="support-code"
-      type="text"
-      value={supportCode}
-      onChange={(event) => setSupportCode(event.target.value.toUpperCase())}
-      placeholder="Enter support code if debugging a merchant account"
-      className="w-full bg-transparent outline-none"
-      style={{ color: 'var(--text)' }}
-    />
-  </div>
-</div>
+            <div>
+              <label
+                htmlFor="support-code"
+                className="mb-2 block text-sm font-semibold"
+                style={{ color: 'var(--text)' }}
+              >
+                Support Access Code{' '}
+                <span style={{ color: 'var(--text-muted)' }}>
+                  {requiresSupportCode ? '(required for internal users)' : '(optional)'}
+                </span>
+              </label>
+
+              <div
+                className="flex items-center gap-3 border px-4 py-3"
+                style={{
+                  backgroundColor: 'var(--surface-muted)',
+                  borderColor: 'transparent',
+                  borderRadius: 'var(--radius-md)',
+                }}
+              >
+                <ShieldCheck size={18} style={{ color: 'var(--text-muted)' }} />
+                <input
+                  id="support-code"
+                  type="text"
+                  value={supportCode}
+                  onChange={(event) => setSupportCode(event.target.value.toUpperCase())}
+                  placeholder="Enter support code to access merchant debug context"
+                  required={requiresSupportCode}
+                  className="w-full bg-transparent outline-none"
+                  style={{ color: 'var(--text)' }}
+                />
+              </div>
             </div>
 
             <div className="flex items-center justify-between gap-4">
