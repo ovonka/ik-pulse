@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Copy, ShieldCheck, Ban, Check } from 'lucide-react';
 import { useSupportAccessStore } from '../app/store/supportAccessStore';
 import { useToastStore } from '../app/store/toastStore';
+import { useAuthStore } from '../app/store/authStore';
 
 function formatExpiry(isoDate: string) {
   return new Date(isoDate).toLocaleString();
@@ -10,6 +11,8 @@ function formatExpiry(isoDate: string) {
 function SupportAccessPage() {
   const [reason, setReason] = useState('');
   const [isCopied, setIsCopied] = useState(false);
+
+  const accessToken = useAuthStore((state) => state.accessToken);
 
   const activeSession = useSupportAccessStore((state) => state.activeSession);
   const status = useSupportAccessStore((state) => state.status);
@@ -22,8 +25,10 @@ function SupportAccessPage() {
   const showToast = useToastStore((state) => state.showToast);
 
   useEffect(() => {
-    void fetchCurrentSession();
-  }, [fetchCurrentSession]);
+    if (accessToken) {
+      void fetchCurrentSession();
+    }
+  }, [accessToken, fetchCurrentSession]);
 
   useEffect(() => {
     if (!error) return;
@@ -83,7 +88,6 @@ function SupportAccessPage() {
     if (!activeSession?.supportCode) return;
 
     await navigator.clipboard.writeText(activeSession.supportCode);
-
     setIsCopied(true);
 
     window.setTimeout(() => {

@@ -32,11 +32,6 @@ export const useSupportAccessStore = create<SupportAccessState>((set) => ({
     const accessToken = useAuthStore.getState().accessToken;
 
     if (!accessToken) {
-      set({
-        activeSession: null,
-        status: 'error',
-        error: 'Missing access token',
-      });
       return;
     }
 
