@@ -4,6 +4,7 @@ import { ActivityIcon, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../app/store/authStore';
 import { useToastStore } from '../app/store/toastStore';
 import ThemeToggle from '../components/ui/ThemeToggle';
+import { useSupportDebugStore } from '../app/store/supportDebugStore';
 
 type RedirectState = {
   from?: {
@@ -20,6 +21,7 @@ function LoginPage() {
   const error = useAuthStore((state) => state.error);
   const clearError = useAuthStore((state) => state.clearError);
   const showToast = useToastStore((state) => state.showToast);
+  const consumeSupportCode = useSupportDebugStore((state) => state.consumeSupportCode);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,18 +31,31 @@ function LoginPage() {
   const state = location.state as RedirectState | null;
   const redirectPath = state?.from?.pathname ?? '/dashboard';
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     clearError();
 
     try {
       const user = await login({ email, password });
 
-      showToast({
-        type: 'success',
-        title: 'Login successful',
-        message: `Welcome back, ${user.email}`,
-      });
+      if (
+        supportCode.trim() &&
+        ['admin', 'support', 'qa'].includes(user.role)
+      ) {
+        await consumeSupportCode(supportCode.trim());
+
+        showToast({
+          type: 'success',
+          title: 'Support session started',
+          message: 'Merchant debug context loaded successfully.',
+        });
+      } else {
+        showToast({
+          type: 'success',
+          title: 'Login successful',
+          message: `Welcome back, ${user.email}`,
+        });
+      }
 
       navigate(redirectPath, { replace: true });
     } catch {
