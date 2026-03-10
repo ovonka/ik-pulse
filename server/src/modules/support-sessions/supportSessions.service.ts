@@ -19,9 +19,11 @@ function toSupportSessionResponse(record: SupportSessionRecord): SupportSessionR
     status: record.status,
     accessScope: record.access_scope,
     reason: record.reason,
+    resolutionNote: record.resolution_note,
     expiresAt: record.expires_at,
     consumedAt: record.consumed_at,
     revokedAt: record.revoked_at,
+    resolvedAt: record.resolved_at,
     createdAt: record.created_at,
   };
 }
@@ -45,7 +47,7 @@ export async function getActiveSupportSessionForMerchant(
     SELECT *
     FROM support_sessions
     WHERE merchant_id = $1
-      AND status IN ('active', 'used')
+      AND status IN ('active', 'used', 'resolved')
     ORDER BY created_at DESC
     LIMIT 1
     `,
@@ -70,7 +72,7 @@ export async function createSupportSession(params: {
 
   const existing = await getActiveSupportSessionForMerchant(authUser.merchantId);
 
-  if (existing) {
+  if (existing && ['active', 'used'].includes(existing.status)) {
     return existing;
   }
 
@@ -185,6 +187,10 @@ export async function consumeSupportCode(params: {
     throw new Error('Support code has been revoked');
   }
 
+  if (session.status === 'resolved') {
+    throw new Error('Support code has already been resolved');
+  }
+
   const expiryCheck = await pool.query<{ is_expired: boolean }>(
     `
     SELECT (expires_at <= NOW()) AS is_expired
@@ -275,4 +281,47 @@ export async function consumeSupportCode(params: {
       requestedByEmail: merchantContext.requested_by_email,
     },
   };
+}
+
+export async function resolveSupportSession(params: {
+  merchantId: string;
+  actorUserId: string;
+  resolutionNote: string;
+}): Promise<SupportSessionResponse | null> {
+  const result = await pool.query<SupportSessionRecord>(
+    `
+    UPDATE support_sessions
+    SET status = 'resolved',
+        resolved_at = NOW(),
+        resolved_by_user_id = $1,
+        resolution_note = $2
+    WHERE merchant_id = $3
+      AND status IN ('active', 'used')
+    RETURNING *
+    `,
+    [params.actorUserId, params.resolutionNote, params.merchantId]
+  );
+
+  const session = result.rows[0];
+
+  if (!session) {
+    return null;
+  }
+
+  await pool.query(
+    `
+    INSERT INTO support_audit_logs (support_session_id, actor_user_id, action, details)
+    VALUES ($1, $2, $3, $4::jsonb)
+    `,
+    [
+      session.id,
+      params.actorUserId,
+      'support_session_resolved',
+      JSON.stringify({
+        resolutionNote: params.resolutionNote,
+      }),
+    ]
+  );
+
+  return toSupportSessionResponse(session);
 }
