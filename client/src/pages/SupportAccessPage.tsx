@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
-import { Copy, ShieldCheck, Ban } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Copy, ShieldCheck, Ban, Check } from 'lucide-react';
 import { useSupportAccessStore } from '../app/store/supportAccessStore';
 import { useToastStore } from '../app/store/toastStore';
+import { useAuthStore } from '../app/store/authStore';
 
 function formatExpiry(isoDate: string) {
   return new Date(isoDate).toLocaleString();
@@ -9,12 +10,40 @@ function formatExpiry(isoDate: string) {
 
 function SupportAccessPage() {
   const [reason, setReason] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
+
+  const accessToken = useAuthStore((state) => state.accessToken);
+
   const activeSession = useSupportAccessStore((state) => state.activeSession);
+  const status = useSupportAccessStore((state) => state.status);
+  const error = useSupportAccessStore((state) => state.error);
+  const fetchCurrentSession = useSupportAccessStore((state) => state.fetchCurrentSession);
   const generateCode = useSupportAccessStore((state) => state.generateCode);
   const revokeCode = useSupportAccessStore((state) => state.revokeCode);
+  const clearError = useSupportAccessStore((state) => state.clearError);
+
   const showToast = useToastStore((state) => state.showToast);
 
+  useEffect(() => {
+    if (accessToken) {
+      void fetchCurrentSession();
+    }
+  }, [accessToken, fetchCurrentSession]);
+
+  useEffect(() => {
+    if (!error) return;
+
+    showToast({
+      type: 'error',
+      title: 'Support access error',
+      message: error,
+    });
+
+    clearError();
+  }, [error, clearError, showToast]);
+
   const isActive = activeSession?.status === 'active';
+  const isLoading = status === 'loading';
 
   const helperText = useMemo(() => {
     if (!activeSession) {
@@ -25,39 +54,65 @@ function SupportAccessPage() {
       return 'The previous support code has been revoked. Generate a new one if support still needs access.';
     }
 
+    if (activeSession.status === 'used') {
+      return 'Your support request has been attended to by the internal debug team.';
+    }
+
+    if (activeSession.status === 'resolved') {
+      return 'Your support request has been resolved. You can generate a new support code if you still need help.';
+    }
+
+    if (activeSession.status === 'expired') {
+      return 'The previous support code expired. Generate a new one if support still needs access.';
+    }
+
     return 'A temporary support code is active. Share it only with your verified support or admin contact.';
   }, [activeSession]);
 
-  function handleGenerateCode() {
-    const session = generateCode(reason.trim() || 'Merchant requested troubleshooting assistance');
+  async function handleGenerateCode() {
+    try {
+      const session = await generateCode({
+        reason: reason.trim() || 'Merchant requested troubleshooting assistance',
+        accessScope: 'read_only',
+      });
 
-    showToast({
-      type: 'success',
-      title: 'Support code generated',
-      message: `Code ${session.code} is active until ${formatExpiry(session.expiresAt)}`,
-    });
+      showToast({
+        type: 'success',
+        title: 'Support code generated',
+        message: `Code ${session.supportCode} is active until ${formatExpiry(session.expiresAt)}`,
+      });
+
+      setReason('');
+    } catch {
+      // handled by store + toast effect
+    }
   }
 
   async function handleCopyCode() {
-    if (!activeSession?.code) return;
+    if (!activeSession?.supportCode) return;
 
-    await navigator.clipboard.writeText(activeSession.code);
+    await navigator.clipboard.writeText(activeSession.supportCode);
+    setIsCopied(true);
 
-    showToast({
-      type: 'info',
-      title: 'Support code copied',
-      message: `${activeSession.code} copied to clipboard`,
-    });
+    window.setTimeout(() => {
+      setIsCopied(false);
+    }, 2200);
   }
 
-  function handleRevokeCode() {
-    revokeCode();
+  async function handleRevokeCode() {
+    try {
+      await revokeCode();
 
-    showToast({
-      type: 'warning',
-      title: 'Support code revoked',
-      message: 'The active support session has been revoked.',
-    });
+      showToast({
+        type: 'warning',
+        title: 'Support code revoked',
+        message: 'The active support session has been revoked.',
+      });
+
+      setIsCopied(false);
+    } catch {
+      // handled by store + toast effect
+    }
   }
 
   return (
@@ -117,20 +172,22 @@ function SupportAccessPage() {
             <button
               type="button"
               onClick={handleGenerateCode}
-              className="cursor-pointer rounded-xl px-4 py-3 text-sm font-semibold transition hover:opacity-90"
+              disabled={isLoading}
+              className="cursor-pointer rounded-xl px-4 py-3 text-sm font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               style={{
                 backgroundColor: 'var(--primary)',
                 color: '#fff',
               }}
             >
-              Generate Support Code
+              {isLoading ? 'Processing...' : 'Generate Support Code'}
             </button>
 
             {isActive ? (
               <button
                 type="button"
                 onClick={handleRevokeCode}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition hover:opacity-90"
+                disabled={isLoading}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 style={{
                   borderColor: 'var(--danger)',
                   color: 'var(--danger)',
@@ -170,8 +227,11 @@ function SupportAccessPage() {
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                   Support Code
                 </p>
-                <p className="mt-1 text-2xl font-bold tracking-widest" style={{ color: 'var(--text)' }}>
-                  {activeSession.code}
+                <p
+                  className="mt-1 text-2xl font-bold tracking-widest"
+                  style={{ color: 'var(--text)' }}
+                >
+                  {activeSession.supportCode}
                 </p>
               </div>
 
@@ -180,22 +240,22 @@ function SupportAccessPage() {
                 onClick={handleCopyCode}
                 className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition hover:opacity-90"
                 style={{
-                  borderColor: 'var(--border)',
-                  color: 'var(--text)',
-                  backgroundColor: 'var(--surface)',
+                  borderColor: isCopied ? 'var(--success)' : 'var(--border)',
+                  color: isCopied ? 'var(--success)' : 'var(--text)',
+                  backgroundColor: isCopied ? 'var(--success-soft)' : 'var(--surface)',
                 }}
               >
-                <Copy size={16} />
-                Copy code
+                {isCopied ? <Check size={16} /> : <Copy size={16} />}
+                {isCopied ? 'Copied' : 'Copy code'}
               </button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div>
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                   Status
                 </p>
-                <p className="mt-1 font-semibold" style={{ color: 'var(--text)' }}>
+                <p className="mt-1 font-semibold capitalize" style={{ color: 'var(--text)' }}>
                   {activeSession.status}
                 </p>
               </div>
@@ -217,7 +277,42 @@ function SupportAccessPage() {
                   {activeSession.reason}
                 </p>
               </div>
+
+              <div>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  Resolution Note
+                </p>
+                <p className="mt-1 font-semibold" style={{ color: 'var(--text)' }}>
+                  {activeSession.resolutionNote ?? '—'}
+                </p>
+              </div>
             </div>
+
+            {activeSession.status === 'used' ? (
+              <div
+                className="rounded-xl border px-4 py-4 text-sm"
+                style={{
+                  backgroundColor: 'var(--success-soft)',
+                  borderColor: 'var(--success)',
+                  color: 'var(--success)',
+                }}
+              >
+                Your support request has been attended to by the internal debug team.
+              </div>
+            ) : null}
+
+            {activeSession.status === 'resolved' ? (
+              <div
+                className="rounded-xl border px-4 py-4 text-sm"
+                style={{
+                  backgroundColor: 'var(--info-soft)',
+                  borderColor: 'var(--info)',
+                  color: 'var(--info)',
+                }}
+              >
+                Your support request has been resolved. You can generate a new support code if you still need help.
+              </div>
+            ) : null}
           </div>
         ) : (
           <div

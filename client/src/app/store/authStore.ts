@@ -95,8 +95,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  logout: () => {
+   logout: () => {
     clearStoredAccessToken();
+    localStorage.removeItem('ikpulse-support-debug-context');
 
     set({
       user: null,

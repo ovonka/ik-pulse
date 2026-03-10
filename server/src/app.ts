@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import authRouter from './modules/auth/auth.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import supportSessionsRouter from './modules/support-sessions/supportSessions.routes.js';
 
 const app = express();
 
@@ -17,7 +18,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/auth', authRouter);
-
+app.use('/support-sessions', supportSessionsRouter);
 app.use(errorHandler);
 
 export default app;

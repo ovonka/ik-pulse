@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './TopBar';
+import SupportDebugBanner from './SupportDebugBanner';
 
 const pageMeta: Record<string, { title: string; subtitle: string }> = {
   '/dashboard': {
@@ -14,6 +15,14 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
   '/settlements': {
     title: 'Settlements',
     subtitle: 'Track upcoming and completed payouts',
+  },
+  '/support-access': {
+    title: 'Support Access',
+    subtitle: 'Generate and manage temporary support sessions',
+  },
+  '/internal-support-session': {
+    title: 'Resolve Support Session',
+    subtitle: 'Close the active merchant support request with a resolution note',
   },
   '/simulator': {
     title: 'Event Simulator',
@@ -39,6 +48,7 @@ function AppLayout() {
 
       <div className="lg:pl-65">
         <Topbar title={meta.title} subtitle={meta.subtitle} />
+        <SupportDebugBanner />
 
         <main className="p-4 md:p-6">
           <Outlet />
