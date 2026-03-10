@@ -33,3 +33,23 @@ export async function consumeSupportCodeRequest(
 
   return parseJson<ConsumeSupportCodeResponse>(response);
 }
+
+export async function resolveSupportSessionRequest(
+  accessToken: string,
+  merchantId: string,
+  resolutionNote: string
+): Promise<{ session: unknown }> {
+  const response = await fetch(
+    `${API_BASE_URL}/support-sessions/${merchantId}/resolve`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ resolutionNote }),
+    }
+  );
+
+  return parseJson<{ session: unknown }>(response);
+}
