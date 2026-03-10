@@ -14,6 +14,8 @@ export type TransactionRecord = {
   transaction_type: string;
   payment_method: string | null;
   failure_reason: string | null;
+  retry_of_transaction_id: string | null;
+  attempt_number: number;
   initiated_at: string | null;
   received_at: string | null;
   completed_at: string | null;
@@ -35,6 +37,8 @@ export type TransactionResponse = {
   transactionType: string;
   paymentMethod: string | null;
   failureReason: string | null;
+  retryOfTransactionId: string | null;
+  attemptNumber: number;
   initiatedAt: string | null;
   receivedAt: string | null;
   completedAt: string | null;
@@ -57,4 +61,11 @@ export type TransactionSummaryResponse = {
   successfulCount: number;
   failedCount: number;
   pendingCount: number;
+};
+
+export type RetryTransactionResponse = {
+  message: string;
+  outcome: 'success' | 'failed';
+  originalTransactionId: string;
+  retryTransaction: TransactionResponse;
 };
