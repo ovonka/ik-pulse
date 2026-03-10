@@ -6,6 +6,7 @@ import {
   consumeSupportCodeController,
   createSupportSessionController,
   getActiveSupportSessionController,
+  resolveSupportSessionController,
   revokeSupportSessionController,
 } from './supportSessions.controller.js';
 
@@ -37,6 +38,13 @@ supportSessionsRouter.post(
   authenticate,
   authorize('admin', 'support', 'qa'),
   asyncHandler(consumeSupportCodeController)
+);
+
+supportSessionsRouter.post(
+  '/:merchantId/resolve',
+  authenticate,
+  authorize('admin', 'support', 'qa'),
+  asyncHandler<{ merchantId: string }>(resolveSupportSessionController)
 );
 
 export default supportSessionsRouter;
