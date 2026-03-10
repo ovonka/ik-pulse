@@ -1,12 +1,20 @@
 import { faker } from '@faker-js/faker';
 import { pool } from '../../config/db.js';
 
-function randomStatus() {
+function randomTransactionStatus() {
   return faker.helpers.weightedArrayElement([
     { weight: 78, value: 'success' },
     { weight: 12, value: 'failed' },
     { weight: 10, value: 'pending' },
   ]) as 'success' | 'failed' | 'pending';
+}
+
+function randomSettlementStatus() {
+  return faker.helpers.weightedArrayElement([
+    { weight: 70, value: 'completed' },
+    { weight: 20, value: 'pending' },
+    { weight: 10, value: 'delayed' },
+  ]) as 'completed' | 'pending' | 'delayed';
 }
 
 function randomPaymentMethod() {
@@ -42,7 +50,7 @@ async function seedMerchantOpsData() {
   const merchant = merchantResult.rows[0];
 
   if (!merchant) {
-    throw new Error('No merchant found to seed transaction data');
+    throw new Error('No merchant found to seed transaction and settlement data');
   }
 
   const branchResult = await pool.query<{ id: string }>(
@@ -72,9 +80,10 @@ async function seedMerchantOpsData() {
   const source = sourceResult.rows[0] ?? null;
 
   await pool.query(`DELETE FROM transactions WHERE merchant_id = $1`, [merchant.id]);
+  await pool.query(`DELETE FROM settlements WHERE merchant_id = $1`, [merchant.id]);
 
   for (let index = 0; index < 120; index += 1) {
-    const status = randomStatus();
+    const status = randomTransactionStatus();
     const amount = faker.finance.amount({ min: 12, max: 3500, dec: 2 });
     const initiatedAt = faker.date.recent({ days: 12 });
     const receivedAt = faker.date.soon({ days: 0, refDate: initiatedAt });
@@ -123,7 +132,55 @@ async function seedMerchantOpsData() {
     );
   }
 
-  console.log('Seeded transactions successfully');
+  for (let index = 0; index < 14; index += 1) {
+    const status = randomSettlementStatus();
+    const grossAmount = faker.finance.amount({ min: 15000, max: 90000, dec: 2 });
+    const feeAmount = (Number(grossAmount) * faker.number.float({ min: 0.01, max: 0.03 })).toFixed(2);
+    const netAmount = (Number(grossAmount) - Number(feeAmount)).toFixed(2);
+    const scheduledFor = faker.date.recent({ days: 10 });
+    const settledAt =
+      status === 'completed'
+        ? faker.date.soon({ days: 1, refDate: scheduledFor })
+        : null;
+
+    await pool.query(
+      `
+      INSERT INTO settlements (
+        merchant_id,
+        branch_id,
+        transaction_source_id,
+        provider,
+        provider_settlement_ref,
+        gross_amount,
+        fee_amount,
+        net_amount,
+        transaction_count,
+        status,
+        scheduled_for,
+        settled_at
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+      )
+      `,
+      [
+        merchant.id,
+        branch?.id ?? null,
+        source?.id ?? null,
+        faker.helpers.arrayElement(['ikhokha-sim', 'paystack-sim', 'ozow-sim']),
+        `sett_${faker.string.alphanumeric(12).toUpperCase()}`,
+        grossAmount,
+        feeAmount,
+        netAmount,
+        faker.number.int({ min: 50, max: 1200 }),
+        status,
+        scheduledFor,
+        settledAt,
+      ]
+    );
+  }
+
+  console.log('Seeded transactions and settlements successfully');
   process.exit(0);
 }
 
