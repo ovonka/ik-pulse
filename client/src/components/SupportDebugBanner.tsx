@@ -1,9 +1,8 @@
-import { ShieldCheck, X } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { useSupportDebugStore } from '../app/store/supportDebugStore';
 
 function SupportDebugBanner() {
   const debugContext = useSupportDebugStore((state) => state.debugContext);
-  const clearDebugContext = useSupportDebugStore((state) => state.clearDebugContext);
 
   if (!debugContext) {
     return null;
@@ -27,7 +26,10 @@ function SupportDebugBanner() {
           <div className="space-y-1">
             <p className="text-sm font-semibold">Active Support Debug Context</p>
             <p className="text-sm">
-              Helping <span className="font-semibold">{debugContext.merchantContext.merchantName}</span>
+              Helping{' '}
+              <span className="font-semibold">
+                {debugContext.merchantContext.merchantName}
+              </span>
             </p>
             <p className="text-sm">
               Requested by{' '}
@@ -43,20 +45,6 @@ function SupportDebugBanner() {
             </p>
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={clearDebugContext}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition hover:opacity-90"
-          style={{
-            borderColor: 'var(--border)',
-            backgroundColor: 'var(--surface)',
-            color: 'var(--text)',
-          }}
-        >
-          <X size={16} />
-          Clear
-        </button>
       </div>
     </div>
   );
