@@ -10,30 +10,66 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import {
-  transactionVolumeByRange,
-  statusBreakdownByRange,
-} from '../../features/dashboard/data/dashboardMockData';
-import type { ChartRange } from '../../features/dashboard/types/dashboard.types';
+import type { DashboardOverviewResponse } from '../../features/merchant-ops/types/merchantOps.types';
+
+type ChartRange = '1d' | '3d' | '7d' | '14d' | '30d';
 
 const pieColors = ['var(--chart-success)', 'var(--chart-danger)', 'var(--chart-warning)'];
 
 type DashboardChartsProps = {
   chartRange: ChartRange;
   onChartRangeChange: (range: ChartRange) => void;
+  volumeSeries: DashboardOverviewResponse['volumeSeries'];
+  statusBreakdown: DashboardOverviewResponse['statusBreakdown'];
 };
 
 const rangeOptions: { label: string; value: ChartRange }[] = [
-  { label: '24H', value: '24h' },
+  { label: '1D', value: '1d' },
   { label: '3D', value: '3d' },
   { label: '7D', value: '7d' },
   { label: '14D', value: '14d' },
   { label: '30D', value: '30d' },
 ];
 
-function DashboardCharts({ chartRange, onChartRangeChange }: DashboardChartsProps) {
-  const chartData = transactionVolumeByRange[chartRange];
-  const pieData = statusBreakdownByRange[chartRange];
+function filterVolumeSeries(
+  volumeSeries: DashboardOverviewResponse['volumeSeries'],
+  chartRange: ChartRange
+) {
+  if (chartRange === '1d') {
+    return volumeSeries.slice(-1);
+  }
+
+  if (chartRange === '3d') {
+    return volumeSeries.slice(-3);
+  }
+
+  if (chartRange === '7d') {
+    return volumeSeries.slice(-7);
+  }
+
+  if (chartRange === '14d') {
+    return volumeSeries.slice(-14);
+  }
+
+  return volumeSeries.slice(-30);
+}
+
+function DashboardCharts({
+  chartRange,
+  onChartRangeChange,
+  volumeSeries,
+  statusBreakdown,
+}: DashboardChartsProps) {
+  const chartData = filterVolumeSeries(volumeSeries, chartRange).map((item) => ({
+    label: item.label,
+    value: item.successfulAmount + item.failedAmount + item.pendingAmount,
+  }));
+
+  const pieData = [
+    { name: 'Successful', value: statusBreakdown.success },
+    { name: 'Failed', value: statusBreakdown.failed },
+    { name: 'Pending', value: statusBreakdown.pending },
+  ].filter((item) => item.value > 0);
 
   return (
     <section className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
@@ -83,7 +119,7 @@ function DashboardCharts({ chartRange, onChartRangeChange }: DashboardChartsProp
             <LineChart data={chartData}>
               <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="4 4" />
               <XAxis dataKey="label" stroke="var(--text-muted)" />
-              <YAxis stroke="var(--text-muted)" />
+              <YAxis stroke="var(--text-muted)" allowDecimals={false} />
               <Tooltip />
               <Line
                 type="monotone"
@@ -91,6 +127,9 @@ function DashboardCharts({ chartRange, onChartRangeChange }: DashboardChartsProp
                 stroke="var(--chart-primary)"
                 strokeWidth={3}
                 dot={{ r: 5, fill: 'var(--chart-primary)' }}
+                activeDot={{ r: 6 }}
+                isAnimationActive={false}
+                connectNulls
               />
             </LineChart>
           </ResponsiveContainer>
@@ -118,6 +157,8 @@ function DashboardCharts({ chartRange, onChartRangeChange }: DashboardChartsProp
                 nameKey="name"
                 outerRadius={110}
                 paddingAngle={2}
+                isAnimationActive={false}
+                minAngle={4}
               >
                 {pieData.map((entry, index) => (
                   <Cell key={entry.name} fill={pieColors[index % pieColors.length]} />
