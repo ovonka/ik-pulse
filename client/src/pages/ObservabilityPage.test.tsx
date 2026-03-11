@@ -6,17 +6,17 @@ describe('ObservabilityPage', () => {
   it('renders observability page sections', () => {
     render(<ObservabilityPage />);
 
-    expect(screen.getByText(/payment api/i)).toBeInTheDocument();
-    expect(screen.getByText(/webhook service/i)).toBeInTheDocument();
-    expect(screen.getByText(/settlement service/i)).toBeInTheDocument();
-    expect(screen.getByText(/auth service/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Observability$/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/api latency \(24h\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/error rate % \(24h\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/retry count \(24h\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/duplicate events \(24h\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/total transactions/i)).toBeInTheDocument();
+    expect(screen.getByText(/failed transactions/i)).toBeInTheDocument();
+    expect(screen.getByText(/success rate/i)).toBeInTheDocument();
+    expect(screen.getByText(/avg end-to-end latency/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/recent system logs/i)).toBeInTheDocument();
+    expect(screen.getByText(/transaction status trend/i)).toBeInTheDocument();
+    expect(screen.getByText(/provider breakdown/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /failure reasons/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /recent events/i })).toBeInTheDocument();
   });
 
   it('switches chart time range to 1h', async () => {
@@ -26,7 +26,7 @@ describe('ObservabilityPage', () => {
 
     await user.click(screen.getByRole('button', { name: /1h/i }));
 
-    expect(screen.getByText(/api latency \(1h\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/error rate % \(1h\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/transaction status trend/i)).toBeInTheDocument();
+    expect(screen.getByText(/provider breakdown/i)).toBeInTheDocument();
   });
 });
