@@ -54,7 +54,7 @@ describe('TransactionTable', () => {
 
     expect(screen.getByText('prov_123')).toBeInTheDocument();
     expect(screen.getByText('prov_456')).toBeInTheDocument();
-    expect(screen.getByText('#1')).toBeInTheDocument();
+    expect(screen.getAllByText('#1')).toHaveLength(2);
   });
 
   it('shows retry button only for failed transactions and calls onRetry', () => {
