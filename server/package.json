@@ -5,9 +5,11 @@
     "build": "tsc -p tsconfig.json",
     "seed:users": "tsx src/db/seeds/seedUsers.ts",
     "seed:interview": "tsx src/db/seeds/seedInterviewUsers.ts",
+    "seed:ops": "tsx src/db/seeds/seedMerchantOpsData.ts",
     "cleanup:interview": "tsx src/db/seeds/cleanupInterviewData.ts"
   },
   "dependencies": {
+    "@faker-js/faker": "^10.3.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
