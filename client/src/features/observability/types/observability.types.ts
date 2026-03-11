@@ -1,28 +1,43 @@
-export type ObservabilityRange = '1h' | '6h' | '24h' | '7d';
-
-export type ServiceHealthStatus = 'healthy' | 'degraded';
-
-export type ServiceHealthItem = {
-  name: string;
-  status: ServiceHealthStatus;
-  uptime: string;
-  latency: string;
-};
-
-export type TimeSeriesPoint = {
-  label: string;
-  p50?: number;
-  p95?: number;
-  p99?: number;
-  value?: number;
-};
-
-export type SystemLogLevel = 'INFO' | 'WARN' | 'ERROR';
-
-export type SystemLogItem = {
-  id: string;
-  timestamp: string;
-  level: SystemLogLevel;
-  service: string;
-  message: string;
+export type ObservabilityOverviewResponse = {
+  metrics: {
+    totalTransactions: number;
+    successfulTransactions: number;
+    failedTransactions: number;
+    pendingTransactions: number;
+    successRate: number;
+    avgEndToEndLatencyMs: number;
+    avgPlatformToProviderLatencyMs: number;
+  };
+  timeSeries: Array<{
+    label: string;
+    successCount: number;
+    failedCount: number;
+    pendingCount: number;
+  }>;
+  failureReasons: Array<{
+    reason: string;
+    count: number;
+  }>;
+  providerBreakdown: Array<{
+    provider: string;
+    successCount: number;
+    failedCount: number;
+    pendingCount: number;
+  }>;
+  recentEvents: Array<{
+    id: string;
+    type:
+      | 'transaction_success'
+      | 'transaction_failed'
+      | 'transaction_pending'
+      | 'retry_success'
+      | 'retry_failed';
+    provider: string;
+    providerTransactionRef: string | null;
+    amount: number;
+    status: 'success' | 'failed' | 'pending';
+    failureReason: string | null;
+    createdAt: string;
+    attemptNumber: number;
+  }>;
 };
