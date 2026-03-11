@@ -32,18 +32,11 @@ function randomPaymentMethod() {
 }
 
 function randomProvider() {
-  return faker.helpers.arrayElement([
-    'ikhokha-sim',
-    'paystack-sim',
-    'ozow-sim',
-  ]);
+  return faker.helpers.arrayElement(['ikhokha-sim', 'paystack-sim', 'ozow-sim']);
 }
 
 function randomTransactionType() {
-  return faker.helpers.arrayElement([
-    'card_payment',
-    'refund',
-  ]);
+  return faker.helpers.arrayElement(['card_payment', 'refund']);
 }
 
 function failureReasonFor(status: TransactionStatus) {
@@ -78,17 +71,14 @@ function generateBusinessTrafficMultiplier(dayStart: Date) {
 
   let base = 1;
 
-  // Sunday and Saturday quieter
   if (weekday === 0 || weekday === 6) {
     base *= 0.65;
   }
 
-  // Friday busier
   if (weekday === 5) {
     base *= 1.35;
   }
 
-  // Month-end-ish spike effect
   const dayOfMonth = dayStart.getDate();
   if (dayOfMonth >= 25 || dayOfMonth <= 3) {
     base *= 1.15;
@@ -105,42 +95,17 @@ function generateBusinessTrafficMultiplier(dayStart: Date) {
 
 function generateAmountForTransaction(status: TransactionStatus) {
   if (status === 'failed') {
-    return faker.finance.amount({
-      min: 20,
-      max: 2500,
-      dec: 2,
-    });
+    return faker.finance.amount({ min: 20, max: 2500, dec: 2 });
   }
 
   if (status === 'pending') {
-    return faker.finance.amount({
-      min: 30,
-      max: 3200,
-      dec: 2,
-    });
+    return faker.finance.amount({ min: 30, max: 3200, dec: 2 });
   }
 
-  return faker.finance.amount({
-    min: 15,
-    max: 4500,
-    dec: 2,
-  });
+  return faker.finance.amount({ min: 15, max: 4500, dec: 2 });
 }
 
-async function seedMerchantOpsData() {
-  const merchantResult = await pool.query<{ id: string }>(`
-    SELECT id
-    FROM merchants
-    ORDER BY created_at ASC
-    LIMIT 1
-  `);
-
-  const merchant = merchantResult.rows[0];
-
-  if (!merchant) {
-    throw new Error('No merchant found to seed transaction and settlement data');
-  }
-
+async function seedMerchantData(merchantId: string) {
   const branchResult = await pool.query<{ id: string }>(
     `
     SELECT id
@@ -149,7 +114,7 @@ async function seedMerchantOpsData() {
     ORDER BY created_at ASC
     LIMIT 1
     `,
-    [merchant.id]
+    [merchantId]
   );
 
   const branch = branchResult.rows[0] ?? null;
@@ -162,16 +127,13 @@ async function seedMerchantOpsData() {
     ORDER BY created_at ASC
     LIMIT 1
     `,
-    [merchant.id]
+    [merchantId]
   );
 
   const source = sourceResult.rows[0] ?? null;
 
-  console.log('Clearing existing merchant transaction and settlement data...');
-  await pool.query(`DELETE FROM transactions WHERE merchant_id = $1`, [merchant.id]);
-  await pool.query(`DELETE FROM settlements WHERE merchant_id = $1`, [merchant.id]);
-
-  console.log('Seeding 30 days of historical transactions...');
+  await pool.query(`DELETE FROM transactions WHERE merchant_id = $1`, [merchantId]);
+  await pool.query(`DELETE FROM settlements WHERE merchant_id = $1`, [merchantId]);
 
   for (let day = 30; day >= 0; day -= 1) {
     const dayStart = getStartOfDayDaysAgo(day);
@@ -223,16 +185,20 @@ async function seedMerchantOpsData() {
           transaction_type,
           payment_method,
           failure_reason,
+          retry_of_transaction_id,
+          attempt_number,
           initiated_at,
           received_at,
-          completed_at
+          completed_at,
+          created_at,
+          updated_at
         )
         VALUES (
-          $1, $2, $3, $4, $5, $6, $7, 'ZAR', $8, $9, $10, $11, $12, $13, $14
+          $1, $2, $3, $4, $5, $6, $7, 'ZAR', $8, $9, $10, $11, NULL, 1, $12, $13, $14, $15, $16
         )
         `,
         [
-          merchant.id,
+          merchantId,
           branch?.id ?? null,
           source?.id ?? null,
           randomProvider(),
@@ -246,12 +212,12 @@ async function seedMerchantOpsData() {
           initiatedAt,
           receivedAt,
           completedAt,
+          initiatedAt,
+          initiatedAt,
         ]
       );
     }
   }
-
-  console.log('Seeding historical settlements...');
 
   for (let index = 0; index < 14; index += 1) {
     const status = randomSettlementStatus();
@@ -298,14 +264,16 @@ async function seedMerchantOpsData() {
         transaction_count,
         status,
         scheduled_for,
-        settled_at
+        settled_at,
+        created_at,
+        updated_at
       )
       VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
       )
       `,
       [
-        merchant.id,
+        merchantId,
         branch?.id ?? null,
         source?.id ?? null,
         randomProvider(),
@@ -317,11 +285,34 @@ async function seedMerchantOpsData() {
         status,
         scheduledFor,
         settledAt,
+        scheduledFor,
+        scheduledFor,
       ]
     );
   }
+}
 
-  console.log('Seeded transactions and settlements successfully');
+async function seedMerchantOpsData() {
+  const merchantsResult = await pool.query<{ id: string }>(`
+    SELECT id
+    FROM merchants
+    ORDER BY created_at ASC
+  `);
+
+  const merchants = merchantsResult.rows;
+
+  if (!merchants.length) {
+    throw new Error('No merchants found to seed transaction and settlement data');
+  }
+
+  console.log(`Seeding merchant ops data for ${merchants.length} merchant(s)...`);
+
+  for (const merchant of merchants) {
+    console.log(`Seeding merchant ${merchant.id}...`);
+    await seedMerchantData(merchant.id);
+  }
+
+  console.log('Seeded transactions and settlements successfully for all merchants');
   process.exit(0);
 }
 
