@@ -4,6 +4,7 @@ import type {
   TransactionSummaryResponse,
   TransactionsListResponse,
 } from '../types/merchantOps.types';
+import { getScopedMerchantId } from '../utils/getScopedMerchandId';
 
 type GetTransactionsParams = {
   page?: number;
@@ -14,7 +15,9 @@ type GetTransactionsParams = {
 
 function toQueryString(params: GetTransactionsParams) {
   const query = new URLSearchParams();
+  const merchantId = getScopedMerchantId();
 
+  if (merchantId) query.set('merchantId', merchantId);
   if (params.page) query.set('page', String(params.page));
   if (params.pageSize) query.set('pageSize', String(params.pageSize));
   if (params.status) query.set('status', params.status);
@@ -29,9 +32,16 @@ export function getTransactionsRequest(params: GetTransactionsParams = {}) {
 }
 
 export function getTransactionSummaryRequest() {
-  return apiGet<TransactionSummaryResponse>('/transactions/summary');
+  const merchantId = getScopedMerchantId();
+  const query = merchantId ? `?merchantId=${encodeURIComponent(merchantId)}` : '';
+
+  return apiGet<TransactionSummaryResponse>(`/transactions/summary${query}`);
 }
 
 export function retryTransactionRequest(transactionId: string) {
-  return apiPost<RetryTransactionResponse>(`/transactions/${transactionId}/retry`);
+  const merchantId = getScopedMerchantId();
+
+  return apiPost<RetryTransactionResponse>(`/transactions/${transactionId}/retry`, {
+    merchantId,
+  });
 }
