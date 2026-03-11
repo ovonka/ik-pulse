@@ -5,6 +5,7 @@
     "build": "tsc -p tsconfig.json",
     "seed:users": "tsx src/db/seeds/seedUsers.ts",
     "seed:interview": "tsx src/db/seeds/seedInterviewUsers.ts",
+    "seed:ops": "tsx src/db/seeds/seedMerchantOpsData.ts",
     "cleanup:interview": "tsx src/db/seeds/cleanupInterviewData.ts"
   },
   "dependencies": {
