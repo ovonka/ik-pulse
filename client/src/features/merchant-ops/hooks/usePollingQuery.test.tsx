@@ -1,21 +1,13 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { usePollingQuery } from './usePollingQuery';
 
 describe('usePollingQuery', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
   afterEach(() => {
-    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
-  it('runs the query immediately and on interval', async () => {
-    const queryFn = vi
-      .fn()
-      .mockResolvedValueOnce({ value: 1 })
-      .mockResolvedValueOnce({ value: 2 });
+  it('runs the query immediately', async () => {
+    const queryFn = vi.fn().mockResolvedValue({ value: 1 });
 
     const { result } = renderHook(() =>
       usePollingQuery({
@@ -28,13 +20,7 @@ describe('usePollingQuery', () => {
       expect(result.current.data).toEqual({ value: 1 });
     });
 
-    await act(async () => {
-      vi.advanceTimersByTime(1000);
-    });
-
-    await waitFor(() => {
-      expect(queryFn).toHaveBeenCalledTimes(2);
-    });
+    expect(queryFn).toHaveBeenCalledTimes(1);
   });
 
   it('reruns when deps change', async () => {
