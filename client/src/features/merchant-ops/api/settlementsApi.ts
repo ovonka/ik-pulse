@@ -3,6 +3,7 @@ import type {
   SettlementSummaryResponse,
   SettlementsListResponse,
 } from '../types/merchantOps.types';
+import { getScopedMerchantId } from '../utils/getScopedMerchandId';
 
 type GetSettlementsParams = {
   page?: number;
@@ -13,7 +14,9 @@ type GetSettlementsParams = {
 
 function toQueryString(params: GetSettlementsParams) {
   const query = new URLSearchParams();
+  const merchantId = getScopedMerchantId();
 
+  if (merchantId) query.set('merchantId', merchantId);
   if (params.page) query.set('page', String(params.page));
   if (params.pageSize) query.set('pageSize', String(params.pageSize));
   if (params.status) query.set('status', params.status);
@@ -28,5 +31,8 @@ export function getSettlementsRequest(params: GetSettlementsParams = {}) {
 }
 
 export function getSettlementSummaryRequest() {
-  return apiGet<SettlementSummaryResponse>('/settlements/summary');
+  const merchantId = getScopedMerchantId();
+  const query = merchantId ? `?merchantId=${encodeURIComponent(merchantId)}` : '';
+
+  return apiGet<SettlementSummaryResponse>(`/settlements/summary${query}`);
 }
