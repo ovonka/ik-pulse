@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type QueryStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -6,19 +6,21 @@ type UsePollingQueryOptions<T> = {
   queryFn: () => Promise<T>;
   intervalMs?: number;
   enabled?: boolean;
+  deps?: unknown[];
 };
 
 export function usePollingQuery<T>({
   queryFn,
   intervalMs = 10000,
   enabled = true,
+  deps = [],
 }: UsePollingQueryOptions<T>) {
   const [data, setData] = useState<T | null>(null);
   const [status, setStatus] = useState<QueryStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
-  async function runQuery() {
+  const runQuery = useCallback(async () => {
     if (!enabled) return;
 
     setStatus((current) => (current === 'idle' ? 'loading' : current));
@@ -37,7 +39,7 @@ export function usePollingQuery<T>({
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Request failed');
     }
-  }
+  }, [enabled, queryFn]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -58,7 +60,7 @@ export function usePollingQuery<T>({
       mountedRef.current = false;
       window.clearInterval(timer);
     };
-  }, [enabled, intervalMs]);
+  }, [enabled, intervalMs, runQuery, ...deps]);
 
   return {
     data,
