@@ -1,43 +1,51 @@
-export type ObservabilityOverviewResponse = {
-  metrics: {
-    totalTransactions: number;
-    successfulTransactions: number;
-    failedTransactions: number;
-    pendingTransactions: number;
-    successRate: number;
-    avgEndToEndLatencyMs: number;
-    avgPlatformToProviderLatencyMs: number;
-  };
-  timeSeries: Array<{
-    label: string;
-    successCount: number;
-    failedCount: number;
-    pendingCount: number;
-  }>;
-  failureReasons: Array<{
-    reason: string;
-    count: number;
-  }>;
-  providerBreakdown: Array<{
-    provider: string;
-    successCount: number;
-    failedCount: number;
-    pendingCount: number;
-  }>;
-  recentEvents: Array<{
-    id: string;
-    type:
-      | 'transaction_success'
-      | 'transaction_failed'
-      | 'transaction_pending'
-      | 'retry_success'
-      | 'retry_failed';
-    provider: string;
-    providerTransactionRef: string | null;
-    amount: number;
-    status: 'success' | 'failed' | 'pending';
-    failureReason: string | null;
-    createdAt: string;
-    attemptNumber: number;
-  }>;
+export type ObservabilityRange = '1h' | '6h' | '24h' | '7d';
+
+export type ServiceHealthStatus = 'healthy' | 'degraded';
+
+export type ServiceHealthItem = {
+  name: string;
+  status: ServiceHealthStatus;
+  uptime: string;
+  latency: string;
+};
+
+export type SystemLogItem = {
+  id: string;
+  timestamp: string;
+  level: 'INFO' | 'WARN' | 'ERROR';
+  service: string;
+  message: string;
+};
+
+export type ObservabilityChartPoint = {
+  label: string;
+  value: number;
+};
+
+export type ObservabilityLatencyPoint = {
+  label: string;
+  p50: number;
+  p95: number;
+  p99: number;
+};
+
+export type ProviderBreakdownChartPoint = {
+  provider: string;
+  successCount: number;
+  failedCount: number;
+  pendingCount: number;
+};
+
+export type FailureReasonChartPoint = {
+  reason: string;
+  count: number;
+};
+
+export type ObservabilityChartsData = {
+  apiLatency: ObservabilityLatencyPoint[];
+  errorRate: ObservabilityChartPoint[];
+  retryCount: ObservabilityChartPoint[];
+  duplicateEvents: ObservabilityChartPoint[];
+  providerBreakdown: ProviderBreakdownChartPoint[];
+  failureReasons: FailureReasonChartPoint[];
 };
