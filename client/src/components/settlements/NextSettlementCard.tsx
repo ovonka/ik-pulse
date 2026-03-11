@@ -1,70 +1,93 @@
-import type { NextSettlement } from '../../features/settlements/types/settlements.types';
-import SettlementStatusBadge from './SettlementStatusBadge';
+import { CalendarDays, Wallet } from 'lucide-react';
+import type { SettlementItem } from '../../features/merchant-ops/types/merchantOps.types';
+import { formatZar } from '../../features/merchant-ops/utils/formatCurrency';
 
 type NextSettlementCardProps = {
-  settlement: NextSettlement;
+  settlement: SettlementItem | null;
 };
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString();
+}
 
 function NextSettlementCard({ settlement }: NextSettlementCardProps) {
   return (
     <section
-      className="border px-6 py-6"
+      className="border p-6"
       style={{
-        backgroundColor: 'var(--success-soft)',
-        borderColor: 'color-mix(in srgb, var(--success) 30%, var(--border))',
+        backgroundColor: 'var(--surface)',
+        borderColor: 'var(--border)',
         borderRadius: 'var(--radius-lg)',
       }}
     >
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="mb-6 flex items-center gap-3">
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-xl"
+          style={{ backgroundColor: 'var(--warning-soft)' }}
+        >
+          <Wallet size={22} style={{ color: 'var(--warning)' }} />
+        </div>
+
         <div>
-          <h2 className="text-3xl font-semibold" style={{ color: 'var(--text)' }}>
+          <h2 className="text-xl font-semibold" style={{ color: 'var(--text)' }}>
             Next Settlement
           </h2>
-          <p className="mt-2 text-base" style={{ color: 'var(--text-secondary)' }}>
-            {settlement.scheduledFor}
-          </p>
-        </div>
-
-        <SettlementStatusBadge status={settlement.status} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Gross Amount
-          </p>
-          <p className="mt-2 text-4xl font-semibold" style={{ color: 'var(--text)' }}>
-            R{settlement.grossAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-          </p>
-        </div>
-
-        <div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Transaction Count
-          </p>
-          <p className="mt-2 text-4xl font-semibold" style={{ color: 'var(--text)' }}>
-            {settlement.transactionCount}
-          </p>
-        </div>
-
-        <div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Estimated Fees
-          </p>
-          <p className="mt-2 text-4xl font-semibold" style={{ color: 'var(--danger)' }}>
-            -R{settlement.estimatedFees.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-          </p>
-        </div>
-
-        <div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Net Settlement
-          </p>
-          <p className="mt-2 text-4xl font-semibold" style={{ color: 'var(--success)' }}>
-            R{settlement.netSettlement.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Upcoming payout details
           </p>
         </div>
       </div>
+
+      {settlement ? (
+        <div className="grid gap-4 md:grid-cols-4">
+          <div>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Provider
+            </p>
+            <p className="mt-1 font-semibold" style={{ color: 'var(--text)' }}>
+              {settlement.provider}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Net Amount
+            </p>
+            <p className="mt-1 font-semibold" style={{ color: 'var(--text)' }}>
+              {formatZar(settlement.netAmount)}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Scheduled For
+            </p>
+            <p className="mt-1 font-semibold" style={{ color: 'var(--text)' }}>
+              {formatDateTime(settlement.scheduledFor)}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Status
+            </p>
+            <p className="mt-1 font-semibold capitalize" style={{ color: 'var(--text)' }}>
+              {settlement.status}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="rounded-xl border px-4 py-6 text-sm"
+          style={{
+            backgroundColor: 'var(--surface-muted)',
+            borderColor: 'var(--border)',
+            color: 'var(--text-muted)',
+          }}
+        >
+          No upcoming settlement found.
+        </div>
+      )}
     </section>
   );
 }
