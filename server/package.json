@@ -1,4 +1,7 @@
 {
+  "name": "ik-pulse-server",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
