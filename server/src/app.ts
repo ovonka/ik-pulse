@@ -15,12 +15,22 @@ import simulatorRouter from './modules/simulator/simulator.routes.js';
 const app = express();
 
 app.use(helmet());
-app.use(cors());
-app.use(morgan('dev'));
+app.use(cors({
+  origin: process.env.CLIENT_URL || '*',
+  credentials: true,
+}));
+app.use(morgan('dev', {
+  skip: (_req, res) => res.statusCode === 304
+}));
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({ 
+    status: 'ok',
+    service: 'ik-pulse-api',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+   });
 });
 
 app.use('/auth', authRouter);
@@ -32,6 +42,8 @@ app.use('/observability', observabilityRouter);
 app.use('/simulator', simulatorRouter);
 app.use(errorHandler);
 
+if (process.env.NODE_ENV !== 'production') {
 startLiveTransactionSimulator();
+}
 
 export default app;
