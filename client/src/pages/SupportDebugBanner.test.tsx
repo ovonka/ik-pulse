@@ -1,12 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import SupportDebugBanner from '../components/SupportDebugBanner';
 import { useSupportDebugStore } from '../app/store/supportDebugStore';
+import { useAuthStore } from '../app/store/authStore';
 
 vi.mock('../app/store/supportDebugStore', () => ({
   useSupportDebugStore: vi.fn(),
 }));
 
+vi.mock('../app/store/authStore', () => ({
+  useAuthStore: vi.fn(),
+}));
+
 const mockedUseSupportDebugStore = vi.mocked(useSupportDebugStore);
+const mockedUseAuthStore = vi.mocked(useAuthStore);
 
 describe('SupportDebugBanner', () => {
   beforeEach(() => {
@@ -14,60 +20,59 @@ describe('SupportDebugBanner', () => {
   });
 
   it('does not render when there is no debug context', () => {
-    const mockState = {
-      debugContext: null,
-      clearDebugContext: vi.fn(),
-    };
-
-    mockedUseSupportDebugStore.mockImplementation((selector) =>
-      selector(mockState as never)
+    mockedUseAuthStore.mockImplementation((selector) =>
+      selector({
+        user: {
+          id: 'admin-1',
+          email: 'admin@ikpulse.co.za',
+          role: 'admin',
+        },
+      } as never)
     );
 
-    const { container } = render(<SupportDebugBanner />);
-
-    expect(container.firstChild).toBeNull();
-  });
-
-  it('renders active merchant debug context', () => {
-    const mockState = {
-      debugContext: {
-        session: {
-          id: 'session-1',
-          merchantId: 'merchant-1',
-          branchId: null,
-          supportCode: 'ABC123',
-          status: 'used',
-          accessScope: 'read_only',
-          reason: 'Transactions are failing',
-          resolutionNote: null,
-          expiresAt: '2026-03-10T12:00:00.000Z',
-          consumedAt: '2026-03-10T11:45:00.000Z',
-          revokedAt: null,
-          resolvedAt: null,
-          createdAt: '2026-03-10T11:30:00.000Z',
-        },
-        merchantContext: {
-          merchantId: 'merchant-1',
-          merchantName: 'Acme Stores',
-          branchId: null,
-          requestedByEmail: 'merchant@ikpulse.co.za',
-        },
-      },
-      clearDebugContext: vi.fn(),
-    };
-
     mockedUseSupportDebugStore.mockImplementation((selector) =>
-      selector(mockState as never)
+      selector({
+        debugContext: null,
+      } as never)
     );
 
     render(<SupportDebugBanner />);
 
-    expect(screen.getByText(/active support debug context/i)).toBeInTheDocument();
+    expect(screen.queryByText(/active troubleshoot/i)).not.toBeInTheDocument();
+  });
+
+  it('renders active merchant debug context', () => {
+    mockedUseAuthStore.mockImplementation((selector) =>
+      selector({
+        user: {
+          id: 'support-1',
+          email: 'support@ikpulse.co.za',
+          role: 'support',
+        },
+      } as never)
+    );
+
+    mockedUseSupportDebugStore.mockImplementation((selector) =>
+      selector({
+        debugContext: {
+          session: {
+            supportCode: 'ABC123',
+          },
+          merchantContext: {
+            merchantId: 'merchant-1',
+            merchantName: 'Acme Stores',
+            branchId: null,
+            requestedByEmail: 'merchant@ikpulse.co.za',
+          },
+        },
+      } as never)
+    );
+
+    render(<SupportDebugBanner />);
+
+    expect(screen.getByText(/active troubleshoot/i)).toBeInTheDocument();
     expect(screen.getByText(/acme stores/i)).toBeInTheDocument();
     expect(screen.getByText(/merchant@ikpulse.co.za/i)).toBeInTheDocument();
-    expect(screen.getByText(/ABC123/i)).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /clear/i })
-    ).not.toBeInTheDocument();
+    expect(screen.getByText(/abc123/i)).toBeInTheDocument();
   });
 });

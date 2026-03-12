@@ -1,9 +1,20 @@
 import { Eye, RotateCcw, Search } from 'lucide-react';
-import type { RecentTransaction } from '../../features/dashboard/types/dashboard.types';
+
+type RecentTransaction = {
+  id: string;
+  rawId: string;
+  merchant: string;
+  amount: number;
+  paymentMethod: string | null;
+  timestamp: string;
+  reason: string | null;
+  status: 'success' | 'failed' | 'pending';
+};
 
 type RecentTransactionsTableProps = {
   title: string;
   items: RecentTransaction[];
+  onRetry?: (transactionId: string) => void;
 };
 
 function getActionConfig(item: RecentTransaction) {
@@ -27,7 +38,11 @@ function getActionConfig(item: RecentTransaction) {
   };
 }
 
-function RecentTransactionsTable({ title, items }: RecentTransactionsTableProps) {
+function RecentTransactionsTable({
+  title,
+  items,
+  onRetry,
+}: RecentTransactionsTableProps) {
   return (
     <section
       className="overflow-hidden border"
@@ -63,11 +78,7 @@ function RecentTransactionsTable({ title, items }: RecentTransactionsTableProps)
               const ActionIcon = action.icon;
 
               return (
-                <tr
-                  key={item.id}
-                  className="border-t"
-                  style={{ borderColor: 'var(--border)' }}
-                >
+                <tr key={item.rawId} className="border-t" style={{ borderColor: 'var(--border)' }}>
                   <td className="px-6 py-4" style={{ color: 'var(--text)' }}>
                     {item.id}
                   </td>
@@ -78,7 +89,7 @@ function RecentTransactionsTable({ title, items }: RecentTransactionsTableProps)
                     R{item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </td>
                   <td className="px-6 py-4" style={{ color: 'var(--text)' }}>
-                    {item.paymentMethod}
+                    {item.paymentMethod ?? '—'}
                   </td>
                   <td className="px-6 py-4" style={{ color: 'var(--text-muted)' }}>
                     {item.timestamp}
@@ -100,6 +111,11 @@ function RecentTransactionsTable({ title, items }: RecentTransactionsTableProps)
                           color: 'var(--text)',
                           borderColor: 'var(--border)',
                           backgroundColor: 'var(--surface-muted)',
+                        }}
+                        onClick={() => {
+                          if (item.status === 'failed' && onRetry) {
+                            onRetry(item.rawId);
+                          }
                         }}
                       >
                         <ActionIcon size={16} />

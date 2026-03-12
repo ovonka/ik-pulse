@@ -6,6 +6,7 @@ import {
   getStoredAccessToken,
   setStoredAccessToken,
 } from '../../features/auth/utils/authStorage';
+import { useSupportDebugStore } from './supportDebugStore';
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -98,7 +99,7 @@ export const useAuthStore = create<AuthState>((set) => ({
    logout: () => {
     clearStoredAccessToken();
     localStorage.removeItem('ikpulse-support-debug-context');
-
+    useSupportDebugStore.getState().clearDebugContext();
     set({
       user: null,
       accessToken: null,

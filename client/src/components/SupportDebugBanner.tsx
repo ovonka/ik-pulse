@@ -1,10 +1,15 @@
 import { ShieldCheck } from 'lucide-react';
 import { useSupportDebugStore } from '../app/store/supportDebugStore';
+import { useAuthStore } from '../app/store/authStore';
 
 function SupportDebugBanner() {
   const debugContext = useSupportDebugStore((state) => state.debugContext);
+  const user = useAuthStore((state) => state.user);
 
-  if (!debugContext) {
+  const isInternalUser =
+    user?.role === 'admin' || user?.role === 'support' || user?.role === 'qa';
+
+  if (!isInternalUser || !debugContext) {
     return null;
   }
 
@@ -23,25 +28,26 @@ function SupportDebugBanner() {
             <ShieldCheck size={18} style={{ color: 'var(--warning)' }} />
           </div>
 
-          <div className="space-y-1">
-            <p className="text-sm font-semibold">Active Support Debug Context</p>
-            <p className="text-sm">
-              Helping{' '}
-              <span className="font-semibold">
-                {debugContext.merchantContext.merchantName}
-              </span>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
+              Active Troubleshoot
             </p>
-            <p className="text-sm">
-              Requested by{' '}
-              <span className="font-semibold">
+
+            <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Debugging for merchant:{' '}
+              <span className="font-medium">{debugContext.merchantContext.merchantName}</span>
+            </p>
+
+            <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Requested by:{' '}
+              <span className="font-medium">
                 {debugContext.merchantContext.requestedByEmail ?? 'Unknown requester'}
               </span>
             </p>
-            <p className="text-sm">
-              Support code{' '}
-              <span className="font-mono font-semibold">
-                {debugContext.session.supportCode}
-              </span>
+
+            <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Support code:{' '}
+              <span className="font-medium">{debugContext.session.supportCode}</span>
             </p>
           </div>
         </div>
