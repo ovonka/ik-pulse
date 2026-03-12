@@ -15,9 +15,9 @@ import simulatorRouter from './modules/simulator/simulator.routes.js';
 const app = express();
 
 const allowedOrigins = [
-  'http://localhost:5173',
   process.env.CLIENT_URL,
   process.env.CLIENT_URL_WWW,
+  'http://localhost:5173',
 ];
 
 app.use(helmet());
