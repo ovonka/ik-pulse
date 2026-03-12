@@ -84,6 +84,9 @@ function Sidebar() {
   const logout = useAuthStore((state) => state.logout);
   const debugContext = useSupportDebugStore((state) => state.debugContext);
 
+  const isInternalUser =
+    user?.role === 'admin' || user?.role === 'support' || user?.role === 'qa';
+
   const visibleNavItems = navItems.filter((item) =>
     user ? item.roles.includes(user.role) : false
   );
@@ -190,7 +193,7 @@ function Sidebar() {
               {user?.email ?? 'No active session'}
             </p>
 
-            {debugContext ? (
+            {debugContext && isInternalUser ? (
               <div className="mt-3 space-y-1">
                 <p className="text-[11px] font-medium" style={{ color: 'var(--sidebar-text)' }}>
                   Helping: {debugContext.merchantContext.merchantName}
