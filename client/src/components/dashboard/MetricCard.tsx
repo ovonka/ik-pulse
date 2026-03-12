@@ -67,9 +67,12 @@ function MetricCard({
       </div>
 
       <div>
-        <h3 className="text-4xl font-bold tracking-tight" style={{ color: 'var(--text)' }}>
+        <h3
+          className="wrap-break-word text-3xl font-bold tracking-tight xl:text-4xl"
+          style={{ color: 'var(--text)' }}
+        >
           {value}
-        </h3>
+</h3>
 
         {trend && (
           <p className="mt-2 text-sm" style={{ color: trendColor }}>

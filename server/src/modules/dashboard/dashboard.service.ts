@@ -129,7 +129,7 @@ async function getDashboardVolumeSeries(
   }>(
     `
     SELECT
-      TO_CHAR(DATE_TRUNC('day', created_at), 'DD Mon') AS label,
+      TO_CHAR(DATE_TRUNC('day', COALESCE(initiated_at, created_at)), 'DD Mon') AS label,
       COALESCE(SUM(CASE WHEN status = 'success' THEN amount ELSE 0 END), 0)::text AS successful_amount,
       COALESCE(SUM(CASE WHEN status = 'failed' THEN amount ELSE 0 END), 0)::text AS failed_amount,
       COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0)::text AS pending_amount,
@@ -138,9 +138,9 @@ async function getDashboardVolumeSeries(
       COUNT(*) FILTER (WHERE status = 'pending')::text AS pending_count
     FROM transactions
     WHERE merchant_id = $1
-      AND created_at >= NOW() - INTERVAL '7 days'
-    GROUP BY DATE_TRUNC('day', created_at)
-    ORDER BY DATE_TRUNC('day', created_at) ASC
+      AND COALESCE(initiated_at, created_at) >= NOW() - INTERVAL '30 days'
+    GROUP BY DATE_TRUNC('day', COALESCE(initiated_at, created_at))
+    ORDER BY DATE_TRUNC('day', COALESCE(initiated_at, created_at)) ASC
     `,
     [merchantId]
   );
