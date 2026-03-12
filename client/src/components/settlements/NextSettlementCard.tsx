@@ -1,4 +1,4 @@
-import { CalendarDays, Wallet } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 import type { SettlementItem } from '../../features/merchant-ops/types/merchantOps.types';
 import { formatZar } from '../../features/merchant-ops/utils/formatCurrency';
 

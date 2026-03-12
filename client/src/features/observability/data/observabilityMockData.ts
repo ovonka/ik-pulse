@@ -2,7 +2,8 @@ import type {
   ObservabilityRange,
   ServiceHealthItem,
   SystemLogItem,
-  TimeSeriesPoint,
+  ObservabilityLatencyPoint,
+  ObservabilityChartPoint,
 } from '../types/observability.types';
 
 export const serviceHealthItems: ServiceHealthItem[] = [
@@ -32,7 +33,7 @@ export const serviceHealthItems: ServiceHealthItem[] = [
   },
 ];
 
-export const apiLatencyByRange: Record<ObservabilityRange, TimeSeriesPoint[]> = {
+export const apiLatencyByRange: Record<ObservabilityRange, ObservabilityLatencyPoint[]> = {
   '1h': [
     { label: '00m', p50: 26, p95: 39, p99: 48 },
     { label: '10m', p50: 28, p95: 42, p99: 51 },
@@ -71,7 +72,7 @@ export const apiLatencyByRange: Record<ObservabilityRange, TimeSeriesPoint[]> = 
   ],
 };
 
-export const errorRateByRange: Record<ObservabilityRange, TimeSeriesPoint[]> = {
+export const errorRateByRange: Record<ObservabilityRange, ObservabilityChartPoint[]> = {
   '1h': [
     { label: '00m', value: 0.4 },
     { label: '10m', value: 0.8 },
@@ -110,7 +111,7 @@ export const errorRateByRange: Record<ObservabilityRange, TimeSeriesPoint[]> = {
   ],
 };
 
-export const retryCountByRange: Record<ObservabilityRange, TimeSeriesPoint[]> = {
+export const retryCountByRange: Record<ObservabilityRange, ObservabilityChartPoint[]> = {
   '1h': [
     { label: '00m', value: 1 },
     { label: '10m', value: 2 },
@@ -149,7 +150,7 @@ export const retryCountByRange: Record<ObservabilityRange, TimeSeriesPoint[]> = 
   ],
 };
 
-export const duplicateEventsByRange: Record<ObservabilityRange, TimeSeriesPoint[]> = {
+export const duplicateEventsByRange: Record<ObservabilityRange, ObservabilityChartPoint[]> = {
   '1h': [
     { label: '00m', value: 0 },
     { label: '10m', value: 1 },
