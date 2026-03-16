@@ -5,6 +5,7 @@ import ThemeToggle from '../components/ui/ThemeToggle';
 import { useAuthStore } from '../app/store/authStore';
 import { useToastStore } from '../app/store/toastStore';
 import { useSupportDebugStore } from '../app/store/supportDebugStore';
+import { useSupportAccessStore } from '../app/store/supportAccessStore';
 
 type RedirectState = {
   from?: {
@@ -17,6 +18,7 @@ function LoginPage() {
   const location = useLocation();
 
   const login = useAuthStore((state) => state.login);
+  const fetchCurrentSession = useSupportAccessStore((state) => state.fetchCurrentSession);
   const logout = useAuthStore((state) => state.logout);
   const status = useAuthStore((state) => state.status);
   const error = useAuthStore((state) => state.error);
@@ -58,6 +60,7 @@ function LoginPage() {
 
     try {
       const user = await login({ email, password });
+      await fetchCurrentSession();
 
       if (['admin', 'support', 'qa'].includes(user.role)) {
         if (!supportCode.trim()) {

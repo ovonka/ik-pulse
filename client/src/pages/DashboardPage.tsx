@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CheckCircle2,
   Clock3,
@@ -10,7 +10,6 @@ import AlertBanner from '../components/dashboard/AlertBanner';
 import MetricCard from '../components/dashboard/MetricCard';
 import DashboardCharts from '../components/dashboard/DashboardCharts';
 import RecentTransactionsTable from '../components/dashboard/RecentTransactionsTable';
-import { usePollingQuery } from '../features/merchant-ops/hooks/usePollingQuery';
 import { getDashboardOverviewRequest } from '../features/merchant-ops/api/dashboardApi';
 import {
   getTransactionsRequest,
@@ -22,6 +21,11 @@ import { useToastStore } from '../app/store/toastStore';
 type SelectedFilter = 'sales' | 'success' | 'failed' | 'pending' | 'settlement';
 type ChartRange = '1d' | '3d' | '7d' | '14d' | '30d';
 
+type DashboardOverviewData = Awaited<ReturnType<typeof getDashboardOverviewRequest>>;
+type DashboardTransactionsData = Awaited<
+  ReturnType<typeof getTransactionsRequest>
+>;
+
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString();
 }
@@ -31,12 +35,20 @@ function DashboardPage() {
   const [chartRange, setChartRange] = useState<ChartRange>('7d');
   const [isAlertVisible, setIsAlertVisible] = useState(true);
 
-  const showToast = useToastStore((state) => state.showToast);
+  const [dashboardData, setDashboardData] = useState<DashboardOverviewData | null>(null);
+  const [tableTransactionsData, setTableTransactionsData] =
+    useState<DashboardTransactionsData | null>(null);
 
-  const { data: dashboardData, refetch: refetchDashboard } = usePollingQuery({
-    queryFn: getDashboardOverviewRequest,
-    intervalMs: 15000,
-  });
+  const [isDashboardLoading, setIsDashboardLoading] = useState(true);
+  const [isTableLoading, setIsTableLoading] = useState(true);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const dashboardRequestIdRef = useRef(0);
+  const tableRequestIdRef = useRef(0);
+  const hasLoadedDashboardRef = useRef(false);
+  const hasLoadedTableRef = useRef(false);
+
+  const showToast = useToastStore((state) => state.showToast);
 
   const transactionStatusFilter =
     selectedFilter === 'success'
@@ -47,16 +59,67 @@ function DashboardPage() {
           ? 'pending'
           : undefined;
 
-  const { data: tableTransactionsData, refetch: refetchTableTransactions } = usePollingQuery({
-    queryFn: () =>
-      getTransactionsRequest({
+  const fetchDashboard = useCallback(async () => {
+    const requestId = ++dashboardRequestIdRef.current;
+
+    if (!hasLoadedDashboardRef.current) {
+      setIsDashboardLoading(true);
+    }
+
+    try {
+      const result = await getDashboardOverviewRequest();
+
+      if (requestId !== dashboardRequestIdRef.current) {
+        return;
+      }
+
+      setDashboardData(result);
+      hasLoadedDashboardRef.current = true;
+    } catch (error) {
+      console.error('Failed to fetch dashboard overview', error);
+    } finally {
+      if (requestId === dashboardRequestIdRef.current) {
+        setIsDashboardLoading(false);
+      }
+    }
+  }, []);
+
+  const fetchTableTransactions = useCallback(async () => {
+    const requestId = ++tableRequestIdRef.current;
+
+    if (!hasLoadedTableRef.current) {
+      setIsTableLoading(true);
+    }
+
+    try {
+      const result = await getTransactionsRequest({
         page: 1,
         pageSize: 4,
         status: transactionStatusFilter,
-      }),
-    intervalMs: 10000,
-    deps: [selectedFilter],
-  });
+      });
+
+      if (requestId !== tableRequestIdRef.current) {
+        return;
+      }
+
+      setTableTransactionsData(result);
+      hasLoadedTableRef.current = true;
+    } catch (error) {
+      console.error('Failed to fetch dashboard transactions', error);
+    } finally {
+      if (requestId === tableRequestIdRef.current) {
+        setIsTableLoading(false);
+      }
+    }
+  }, [transactionStatusFilter]);
+
+  useEffect(() => {
+    void fetchDashboard();
+  }, [fetchDashboard]);
+
+  useEffect(() => {
+    void fetchTableTransactions();
+  }, [fetchTableTransactions]);
 
   const metrics = dashboardData?.metrics;
   const breakdown = dashboardData?.statusBreakdown ?? {
@@ -90,6 +153,8 @@ function DashboardPage() {
   }, [tableTransactionsData]);
 
   async function handleRetry(transactionId: string) {
+    setIsRetrying(true);
+
     try {
       const result = await retryTransactionRequest(transactionId);
 
@@ -99,15 +164,19 @@ function DashboardPage() {
         message: result.message,
       });
 
-      await Promise.all([refetchDashboard(), refetchTableTransactions()]);
+      await Promise.all([fetchDashboard(), fetchTableTransactions()]);
     } catch (error) {
       showToast({
         type: 'error',
         title: 'Retry failed',
         message: error instanceof Error ? error.message : 'Retry request failed',
       });
+    } finally {
+      setIsRetrying(false);
     }
   }
+
+  const isBusy = isDashboardLoading || isTableLoading || isRetrying;
 
   return (
     <section className="space-y-6">
@@ -133,7 +202,7 @@ function DashboardPage() {
         <MetricCard
           title="Successful Transactions"
           value={metrics?.successfulTransactions ?? 0}
-          trend={`${breakdown.success} in current period`}
+          trend={`${breakdown.success} in current view`}
           trendType="positive"
           icon={CheckCircle2}
           isActive={selectedFilter === 'success'}
@@ -180,11 +249,19 @@ function DashboardPage() {
         statusBreakdown={breakdown}
       />
 
-      <RecentTransactionsTable
-        title={tableTitleMap[selectedFilter]}
-        items={filteredTransactions}
-        onRetry={(rawId) => handleRetry(rawId)}
-      />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            {isBusy ? 'Updating dashboard data…' : 'Showing recent activity'}
+          </p>
+        </div>
+
+        <RecentTransactionsTable
+          title={tableTitleMap[selectedFilter]}
+          items={filteredTransactions}
+          onRetry={(rawId) => handleRetry(rawId)}
+        />
+      </div>
     </section>
   );
 }
