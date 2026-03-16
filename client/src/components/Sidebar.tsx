@@ -159,7 +159,6 @@ function Sidebar() {
               <li key={to}>
                 <NavLink
                   to={to}
-                  onClick={closeSidebar}
                   className="flex items-center gap-3 rounded-sm px-4 py-3 text-sm font-medium transition"
                   style={({ isActive }) => ({
                     backgroundColor: isActive ? 'var(--sidebar-active)' : 'transparent',

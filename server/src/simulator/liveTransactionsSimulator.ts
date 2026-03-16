@@ -35,7 +35,11 @@ async function insertLiveTransaction() {
     `SELECT id FROM merchants LIMIT 1`
   );
 
-  const merchantId = merchant.rows[0].id;
+  const merchantId = merchant.rows[0]?.id;
+
+  if (!merchantId) {
+    return;
+  }
 
   const status = randomStatus();
   const amount = faker.finance.amount({ min: 15, max: 2000, dec: 2 });
@@ -74,32 +78,26 @@ async function insertLiveTransaction() {
     ]
   );
 
-  console.log("⚡ new live transaction");
+  console.log('⚡ new live transaction');
 }
 
 export async function startLiveTransactionSimulator() {
+  const isEnabled = process.env.ENABLE_LIVE_SIMULATOR === 'true';
 
-  console.log("🚀 Live transaction simulator started");
+  if (!isEnabled) {
+    console.log('⏸ Live transaction simulator disabled');
+    return;
+  }
+
+  console.log('🚀 Live transaction simulator started');
+
+  const intervalMs = Number(process.env.LIVE_SIMULATOR_INTERVAL_MS ?? 15000);
 
   setInterval(async () => {
     try {
-
-      const burstChance = Math.random();
-
-      if (burstChance > 0.8) {
-        const burstSize = faker.number.int({ min: 3, max: 8 });
-
-        for (let i = 0; i < burstSize; i++) {
-          await insertLiveTransaction();
-        }
-
-      } else {
-        await insertLiveTransaction();
-      }
-
+      await insertLiveTransaction();
     } catch (err) {
-      console.error("Live simulator error", err);
+      console.error('Live simulator error', err);
     }
-
-  }, faker.number.int({ min: 3000, max: 7000 }));
+  }, intervalMs);
 }

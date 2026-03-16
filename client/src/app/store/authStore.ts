@@ -6,7 +6,6 @@ import {
   getStoredAccessToken,
   setStoredAccessToken,
 } from '../../features/auth/utils/authStorage';
-import { useSupportDebugStore } from './supportDebugStore';
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -15,6 +14,7 @@ type AuthState = {
   accessToken: string | null;
   status: AuthStatus;
   error: string | null;
+  hasBootstrapped: boolean;
 
   login: (payload: LoginPayload) => Promise<AuthUser>;
   bootstrap: () => Promise<void>;
@@ -27,7 +27,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   accessToken: getStoredAccessToken(),
   status: 'idle',
   error: null,
-
+  hasBootstrapped: false,
   login: async (payload) => {
     set({ status: 'loading', error: null });
 
@@ -41,6 +41,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         accessToken: response.accessToken,
         status: 'authenticated',
         error: null,
+        hasBootstrapped: true,
       });
 
       return response.user;
@@ -54,6 +55,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         accessToken: null,
         status: 'unauthenticated',
         error: message,
+        hasBootstrapped: true,
+
       });
 
       throw error;
@@ -69,6 +72,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         accessToken: null,
         status: 'unauthenticated',
         error: null,
+        hasBootstrapped: true,
       });
       return;
     }
@@ -83,6 +87,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         accessToken: token,
         status: 'authenticated',
         error: null,
+        hasBootstrapped: true,
       });
     } catch {
       clearStoredAccessToken();
@@ -92,19 +97,19 @@ export const useAuthStore = create<AuthState>((set) => ({
         accessToken: null,
         status: 'unauthenticated',
         error: null,
+        hasBootstrapped: true,
       });
     }
   },
 
    logout: () => {
     clearStoredAccessToken();
-    localStorage.removeItem('ikpulse-support-debug-context');
-    useSupportDebugStore.getState().clearDebugContext();
     set({
       user: null,
       accessToken: null,
       status: 'unauthenticated',
       error: null,
+      hasBootstrapped: true,
     });
   },
 
