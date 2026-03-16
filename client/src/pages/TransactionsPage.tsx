@@ -1,39 +1,80 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import TransactionFilterBar from '../components/transactions/TransactionFilterBar';
 import TransactionTable from '../components/transactions/TransactionTable';
 import TransactionPagination from '../components/transactions/TransactionPagination';
 import TransactionsEmptyState from '../components/transactions/TransactionsEmptyState';
-import { usePollingQuery } from '../features/merchant-ops/hooks/usePollingQuery';
 import {
   getTransactionsRequest,
   retryTransactionRequest,
 } from '../features/merchant-ops/api/transactionsApi';
 import { useToastStore } from '../app/store/toastStore';
 
+type TransactionsResponse = Awaited<ReturnType<typeof getTransactionsRequest>>;
+
 function TransactionsPage() {
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'success' | 'failed' | 'pending' | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [transactionsData, setTransactionsData] = useState<TransactionsResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const requestIdRef = useRef(0);
+  const hasLoadedRef = useRef(false);
+
   const showToast = useToastStore((state) => state.showToast);
 
-  const { data: transactionsData, refetch } = usePollingQuery({
-    queryFn: () =>
-      getTransactionsRequest({
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  const fetchTransactions = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+
+    if (!hasLoadedRef.current) {
+      setIsLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
+
+    try {
+      const result = await getTransactionsRequest({
         page: currentPage,
         pageSize: 10,
         status: statusFilter,
-        search: search.trim() || undefined,
-      }),
-    intervalMs: 10000,
-    deps: [currentPage, statusFilter, search],
-  });
+        search: debouncedSearch.trim() || undefined,
+      });
+
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
+      setTransactionsData(result);
+      hasLoadedRef.current = true;
+    } catch (error) {
+      console.error('Failed to fetch transactions', error);
+    } finally {
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    }
+  }, [currentPage, statusFilter, debouncedSearch]);
+
+  useEffect(() => {
+    void fetchTransactions();
+  }, [fetchTransactions]);
 
   const transactions = transactionsData?.items ?? [];
   const pagination = transactionsData?.pagination;
-  const totalCount = pagination?.totalItems ?? 0;
   const totalPages = pagination?.totalPages ?? 1;
-  const hasResults = totalCount > 0;
+  const hasResults = transactions.length > 0;
 
   function updateSearch(value: string) {
     setCurrentPage(1);
@@ -55,7 +96,7 @@ function TransactionsPage() {
         message: result.message,
       });
 
-      await refetch();
+      await fetchTransactions();
     } catch (error) {
       showToast({
         type: 'error',
@@ -74,11 +115,22 @@ function TransactionsPage() {
         onStatusFilterChange={updateStatusFilter}
       />
 
-      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-        Showing {transactions.length} of {totalCount} transactions
-      </p>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          Showing {transactions.length} recent transaction{transactions.length === 1 ? '' : 's'}
+          {totalPages > 1 ? ` • Page ${currentPage} of ${totalPages}` : ''}
+        </p>
 
-      {hasResults ? (
+        {isRefreshing ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Updating…
+          </p>
+        ) : null}
+      </div>
+
+      {isLoading && !transactionsData ? (
+        <TransactionsEmptyState />
+      ) : hasResults ? (
         <div
           className="overflow-hidden border"
           style={{
@@ -91,8 +143,14 @@ function TransactionsPage() {
           <TransactionPagination
             currentPage={currentPage}
             totalPages={totalPages}
-            onPrevious={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            onNext={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+            onPrevious={() => {
+              if (isRefreshing) return;
+              setCurrentPage((page) => Math.max(1, page - 1));
+            }}
+            onNext={() => {
+              if (isRefreshing) return;
+              setCurrentPage((page) => Math.min(totalPages, page + 1));
+            }}
           />
         </div>
       ) : (
