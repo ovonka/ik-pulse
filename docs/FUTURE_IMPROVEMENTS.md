@@ -1,6 +1,3 @@
----
-
-```md
 # Future Improvements
 
 ## Planned Engineering Improvements

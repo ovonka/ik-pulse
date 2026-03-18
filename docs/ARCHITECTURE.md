@@ -1,6 +1,3 @@
----
-
-```md
 # Architecture
 
 ## Overview
