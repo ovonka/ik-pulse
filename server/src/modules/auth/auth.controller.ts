@@ -5,7 +5,10 @@ import * as authService from './auth.service.js';
 export async function loginController(req: Request, res: Response) {
   const parsed = loginSchema.parse(req.body);
 
-  const result = await authService.login(parsed.email, parsed.password);
+  const result = await authService.login(parsed.email, parsed.password, {
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent') || undefined,
+  });
 
   return res.status(200).json(result);
 }

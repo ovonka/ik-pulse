@@ -2,6 +2,7 @@ import { comparePassword } from '../../utils/passwords.js';
 import { signAccessToken } from '../../utils/jwt.js';
 import { findUserByEmail, findUserById } from '../users/users.service.js';
 import type { LoginResponse, SafeUser, UserRecord } from './auth.types.js';
+import { sendLoginAlertEmail } from '../../services/emailService.js';
 
 function toSafeUser(user: UserRecord): SafeUser {
   return {
@@ -13,7 +14,16 @@ function toSafeUser(user: UserRecord): SafeUser {
   };
 }
 
-export async function login(email: string, password: string): Promise<LoginResponse> {
+type LoginMetadata = {
+  ipAddress?: string;
+  userAgent?: string;
+};
+
+export async function login(
+  email: string,
+  password: string,
+  metadata?: LoginMetadata
+): Promise<LoginResponse> {
   const user = await findUserByEmail(email);
 
   if (!user) {
@@ -34,6 +44,16 @@ export async function login(email: string, password: string): Promise<LoginRespo
     role: user.role,
     merchantId: user.merchant_id,
     branchId: user.branch_id,
+  });
+
+  void sendLoginAlertEmail({
+    userEmail: user.email,
+    userRole: user.role,
+    ipAddress: metadata?.ipAddress,
+    userAgent: metadata?.userAgent,
+    loginTimeIso: new Date().toISOString(),
+  }).catch((err) => {
+    console.error('Failed to send login alert email:', err);
   });
 
   return {
